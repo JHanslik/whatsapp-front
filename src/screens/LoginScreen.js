@@ -23,10 +23,11 @@ const LoginScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      await loginUser({ phone, password });
-      // Naviguer vers l'écran principal après connexion
-      // navigation.navigate('Main');
+      const userData = await loginUser({ phone, password });
       Alert.alert("Succès", "Connexion réussie");
+
+      // Naviguer vers l'écran du profil en passant l'ID de l'utilisateur
+      navigation.navigate("Profile", { userId: userData._id });
     } catch (error) {
       Alert.alert("Erreur", error.message || "Échec de la connexion");
     } finally {

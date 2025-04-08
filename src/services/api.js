@@ -67,3 +67,44 @@ export const loginUser = async (credentials) => {
     }
   }
 };
+
+// Nouvelle fonction pour mettre à jour le profil utilisateur
+export const updateUserProfile = async (userId, profileData) => {
+  try {
+    console.log(
+      "Tentative de mise à jour du profil pour l'utilisateur:",
+      userId
+    );
+    console.log("Données à mettre à jour:", profileData);
+
+    const response = await axios.put(`${API_URL}/users/${userId}`, profileData);
+    console.log("Réponse de mise à jour reçue:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Erreur de mise à jour du profil:", error);
+    if (error.response) {
+      throw error.response.data;
+    } else if (error.request) {
+      throw new Error("Le serveur ne répond pas");
+    } else {
+      throw new Error("Erreur réseau: " + error.message);
+    }
+  }
+};
+
+// Fonction pour récupérer les informations du profil
+export const getUserProfile = async (userId) => {
+  try {
+    const response = await axios.get(`${API_URL}/users/profile/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Erreur lors de la récupération du profil:", error);
+    if (error.response) {
+      throw error.response.data;
+    } else if (error.request) {
+      throw new Error("Le serveur ne répond pas");
+    } else {
+      throw new Error("Erreur réseau: " + error.message);
+    }
+  }
+};
