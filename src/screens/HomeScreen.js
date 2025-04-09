@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = ({ route, navigation }) => {
+  const userId = route.params?.userId;
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
@@ -18,7 +20,7 @@ const HomeScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>WhatsApp</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+        <TouchableOpacity onPress={() => navigation.navigate('Profile', { userId })}>
           <View style={styles.profileButton}>
             <Image
               source={{ uri: 'https://via.placeholder.com/40' }}
@@ -40,7 +42,7 @@ const HomeScreen = ({ navigation }) => {
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Profile')}>
+          <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Profile', { userId })}>
             <View style={[styles.actionIcon, { backgroundColor: '#075E54' }]}>
               <Text style={styles.actionIconText}>👤</Text>
             </View>
