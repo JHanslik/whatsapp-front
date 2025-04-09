@@ -8,6 +8,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
+import HomeScreen from "./src/screens/HomeScreen";
 
 const Stack = createStackNavigator();
 
@@ -37,6 +38,11 @@ export default function App() {
             name="Register"
             component={RegisterScreen}
             options={{ title: "Créer un compte" }}
+          />
+          <Stack.Screen
+            name="Home"
+            component={HomeScreen}
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="Profile"
