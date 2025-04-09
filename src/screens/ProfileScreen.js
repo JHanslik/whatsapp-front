@@ -12,9 +12,17 @@ import {
 import { getUserProfile, updateUserProfile } from "../services/api";
 
 const ProfileScreen = ({ route, navigation }) => {
-  // Dans une application réelle, vous obtiendriez l'ID de l'utilisateur
-  // à partir du contexte d'authentification ou des paramètres de navigation
-  const userId = route.params?.userId || "user-id-placeholder";
+  // Vérifier si l'ID utilisateur est présent dans les paramètres de route
+  const userId = route.params?.userId;
+  
+  if (!userId) {
+    Alert.alert(
+      "Erreur",
+      "ID utilisateur non trouvé. Veuillez vous reconnecter."
+    );
+    navigation.navigate("Login");
+    return null;
+  }
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");

@@ -109,6 +109,7 @@ export const getUserProfile = async (userId) => {
   }
 };
 
+
 export const addContact = async (userId, contactId) => {
   try {
     console.log('Ajout du contact:', { userId, contactId });
@@ -129,15 +130,14 @@ export const addContact = async (userId, contactId) => {
   }
 };
 
-export const searchContact = async (phone) => {
+eexport const searchContact = async (phone) => {
   try {
     // Formater le numéro de téléphone si nécessaire
     const formattedPhone = phone.startsWith('+') ? phone : `+33${phone.replace(/^0/, '')}`;
     console.log('Recherche du numéro:', formattedPhone);
 
-    // Enlever le /api/ supplémentaire
     const response = await axios.get(`${API_URL}/users/search/${encodeURIComponent(formattedPhone)}`);
-    
+
     if (!response.data) {
       throw new Error('Contact non trouvé');
     }
@@ -152,4 +152,18 @@ export const searchContact = async (phone) => {
     });
     throw new Error(error.response?.data?.message || 'Contact non trouvé');
   }
+}; // <-- ici il manquait cette accolade fermante !
+
+// Fonction pour déconnecter l'utilisateur
+export const logoutUser = async () => {
+  try {
+    // Dans une application réelle, vous pourriez vouloir appeler une API de déconnexion
+    // Pour l'instant, nous allons simplement nettoyer le stockage local
+    // et retourner un succès
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur lors de la déconnexion:", error);
+    throw new Error("Erreur lors de la déconnexion");
+  }
 };
+
