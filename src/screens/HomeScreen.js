@@ -43,7 +43,7 @@ const HomeScreen = ({ route, navigation }) => {
       ]
     );
   };
-
+  
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
@@ -90,7 +90,10 @@ const HomeScreen = ({ route, navigation }) => {
             <Text style={styles.actionText}>Profil</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            onPress={() => navigation.navigate('AddContact', { userId: route.params?.userId })}
+          >
             <View style={[styles.actionIcon, { backgroundColor: '#25D366' }]}>
               <Text style={styles.actionIconText}>💬</Text>
             </View>
