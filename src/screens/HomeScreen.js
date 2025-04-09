@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = ({ navigation, route }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
@@ -47,7 +47,10 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.actionText}>Profil</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            onPress={() => navigation.navigate('AddContact', { userId: route.params?.userId })}
+          >
             <View style={[styles.actionIcon, { backgroundColor: '#25D366' }]}>
               <Text style={styles.actionIconText}>💬</Text>
             </View>

@@ -9,6 +9,7 @@ import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
 import HomeScreen from "./src/screens/HomeScreen";
+import AddContactScreen from './src/screens/AddContactScreen';
 
 const Stack = createStackNavigator();
 
@@ -48,6 +49,11 @@ export default function App() {
             name="Profile"
             component={ProfileScreen}
             options={{ title: "Modifier le profil" }}
+          />
+          <Stack.Screen
+            name="AddContact"
+            component={AddContactScreen}
+            options={{ title: "Ajouter un contact" }}
           />
         </Stack.Navigator>
       </NavigationContainer>
