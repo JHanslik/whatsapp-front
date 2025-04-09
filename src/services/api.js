@@ -109,50 +109,53 @@ export const getUserProfile = async (userId) => {
   }
 };
 
-
 export const addContact = async (userId, contactId) => {
   try {
-    console.log('Ajout du contact:', { userId, contactId });
+    console.log("Ajout du contact:", { userId, contactId });
     const response = await axios.post(`${API_URL}/contacts/add`, {
       userId,
-      contactId // Maintenant nous envoyons l'ID du contact et non le numéro de téléphone
+      contactId, // Maintenant nous envoyons l'ID du contact et non le numéro de téléphone
     });
     return response.data;
   } catch (error) {
-    console.error('Erreur lors de l\'ajout du contact:', error);
+    console.error("Erreur lors de l'ajout du contact:", error);
     if (error.response) {
       throw error.response.data;
     } else if (error.request) {
-      throw new Error('Le serveur ne répond pas');
+      throw new Error("Le serveur ne répond pas");
     } else {
-      throw new Error('Erreur réseau: ' + error.message);
+      throw new Error("Erreur réseau: " + error.message);
     }
   }
 };
 
-eexport const searchContact = async (phone) => {
+export const searchContact = async (phone) => {
   try {
     // Formater le numéro de téléphone si nécessaire
-    const formattedPhone = phone.startsWith('+') ? phone : `+33${phone.replace(/^0/, '')}`;
-    console.log('Recherche du numéro:', formattedPhone);
+    const formattedPhone = phone.startsWith("+")
+      ? phone
+      : `+33${phone.replace(/^0/, "")}`;
+    console.log("Recherche du numéro:", formattedPhone);
 
-    const response = await axios.get(`${API_URL}/users/search/${encodeURIComponent(formattedPhone)}`);
+    const response = await axios.get(
+      `${API_URL}/users/search/${encodeURIComponent(formattedPhone)}`
+    );
 
     if (!response.data) {
-      throw new Error('Contact non trouvé');
+      throw new Error("Contact non trouvé");
     }
 
-    console.log('Réponse de recherche:', response.data);
+    console.log("Réponse de recherche:", response.data);
     return response.data;
   } catch (error) {
-    console.error('Erreur détaillée:', {
+    console.error("Erreur détaillée:", {
       status: error.response?.status,
       data: error.response?.data,
-      url: error.config?.url
+      url: error.config?.url,
     });
-    throw new Error(error.response?.data?.message || 'Contact non trouvé');
+    throw new Error(error.response?.data?.message || "Contact non trouvé");
   }
-}; // <-- ici il manquait cette accolade fermante !
+};
 
 // Fonction pour déconnecter l'utilisateur
 export const logoutUser = async () => {
@@ -166,4 +169,3 @@ export const logoutUser = async () => {
     throw new Error("Erreur lors de la déconnexion");
   }
 };
-
