@@ -7,11 +7,42 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Alert,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { MaterialIcons } from '@expo/vector-icons';
+import { logoutUser } from '../services/api';
 
 const HomeScreen = ({ route, navigation }) => {
   const userId = route.params?.userId;
+
+  const handleLogout = async () => {
+    Alert.alert(
+      "Déconnexion",
+      "Êtes-vous sûr de vouloir vous déconnecter ?",
+      [
+        {
+          text: "Annuler",
+          style: "cancel"
+        },
+        {
+          text: "Déconnexion",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await logoutUser();
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
+            } catch (error) {
+              Alert.alert("Erreur", "Impossible de se déconnecter");
+            }
+          }
+        }
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -20,14 +51,24 @@ const HomeScreen = ({ route, navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>WhatsApp</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Profile', { userId })}>
-          <View style={styles.profileButton}>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity 
+            onPress={handleLogout} 
+            style={styles.logoutButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialIcons name="logout" size={24} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('Profile', { userId })}
+            style={styles.profileButton}
+          >
             <Image
               source={{ uri: 'https://via.placeholder.com/40' }}
               style={styles.profileImage}
             />
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Main Content */}
@@ -97,6 +138,14 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 15,
+  },
+  logoutButton: {
+    padding: 5,
   },
   profileButton: {
     width: 40,

@@ -108,3 +108,16 @@ export const getUserProfile = async (userId) => {
     }
   }
 };
+
+// Fonction pour déconnecter l'utilisateur
+export const logoutUser = async () => {
+  try {
+    // Dans une application réelle, vous pourriez vouloir appeler une API de déconnexion
+    // Pour l'instant, nous allons simplement nettoyer le stockage local
+    // et retourner un succès
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur lors de la déconnexion:", error);
+    throw new Error("Erreur lors de la déconnexion");
+  }
+};
