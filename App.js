@@ -9,7 +9,7 @@ import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
 import HomeScreen from "./src/screens/HomeScreen";
-import AddContactScreen from './src/screens/AddContactScreen';
+import AddContactScreen from "./src/screens/AddContactScreen";
 
 const Stack = createStackNavigator();
 
@@ -17,7 +17,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <StatusBar style="auto" />
+        <StatusBar style="auto" hidden={true} />
         <Stack.Navigator
           initialRouteName="Login"
           screenOptions={{
