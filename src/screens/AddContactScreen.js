@@ -21,6 +21,7 @@ import {
   updateContactAlias,
   createConversation,
 } from "../services/api";
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const AddContactScreen = ({ navigation, route }) => {
   const [phone, setPhone] = useState("");
@@ -151,19 +152,19 @@ const AddContactScreen = ({ navigation, route }) => {
           style={styles.chatButton}
           onPress={() => handleOpenConversation(item)}
         >
-          <Text style={styles.buttonText}>Discuter</Text>
+          <Icon name="message-text" size={20} color="#FFFFFF" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.editButton}
           onPress={() => openEditModal(item)}
         >
-          <Text style={styles.buttonText}>Modifier</Text>
+          <Icon name="pencil" size={20} color="#FFFFFF" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.deleteButton}
           onPress={() => handleDeleteContact(item._id)}
         >
-          <Text style={styles.buttonText}>Supprimer</Text>
+          <Icon name="delete" size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
     </View>
@@ -398,15 +399,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#075E54",
     padding: 8,
     borderRadius: 5,
-    minWidth: 70,
+    width: 36,
+    height: 36,
     alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8,
   },
   deleteButton: {
     backgroundColor: "#DC3545",
     padding: 8,
     borderRadius: 5,
-    minWidth: 70,
+    width: 36,
+    height: 36,
     alignItems: "center",
+    justifyContent: "center",
   },
   buttonText: {
     color: "#FFFFFF",
@@ -492,11 +498,13 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   chatButton: {
-    backgroundColor: "#25D366", // Couleur verte WhatsApp
+    backgroundColor: "#25D366",
     padding: 8,
     borderRadius: 5,
-    minWidth: 70,
+    width: 36,
+    height: 36,
     alignItems: "center",
+    justifyContent: "center",
     marginRight: 8,
   },
 });
