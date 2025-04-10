@@ -24,24 +24,11 @@ const LoginScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      console.log("Tentative de connexion avec:", { phone });
       const userData = await loginUser({ phone, password });
-      console.log("Réponse de connexion:", userData);
-
-      if (!userData.token || !userData.user) {
-        throw new Error("Réponse de connexion invalide");
-      }
-
-      // Sauvegarder le token
-      await setAuthToken(userData.token); // Attendons que le token soit configuré
-      console.log("Token sauvegardé et headers configurés");
-
+      await setAuthToken(userData.token);
       Alert.alert("Succès", "Connexion réussie");
-
-      // Naviguer vers l'écran d'accueil avec l'ID utilisateur
       navigation.navigate("Home", { userId: userData.user._id });
     } catch (error) {
-      console.error("Erreur de connexion:", error);
       Alert.alert("Erreur", error.message || "Échec de la connexion");
     } finally {
       setLoading(false);
