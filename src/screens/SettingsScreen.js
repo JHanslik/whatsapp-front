@@ -5,26 +5,34 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Switch,
 } from "react-native";
 import { useTranslation } from "react-i18next";
-import LanguageSelector from "../components/LanguageSelector";
+import { useTheme } from "../context/ThemeContext";
 
 const SettingsScreen = () => {
   const { t, i18n } = useTranslation();
+  const { currentTheme, theme, setTheme, toggleTheme } = useTheme();
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t("settings.title")}</Text>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.section, { backgroundColor: theme.surface }]}>
+        <Text style={[styles.sectionTitle, { color: theme.primary }]}>
+          {t("settings.title")}
+        </Text>
 
         <View style={styles.sectionContent}>
+          {/* Sélecteur de langue */}
           <View style={styles.settingItem}>
-            <Text style={styles.settingLabel}>{t("settings.language")}</Text>
+            <Text style={[styles.settingLabel, { color: theme.text }]}>
+              {t("settings.language")}
+            </Text>
             <View style={styles.languageButtons}>
               <TouchableOpacity
                 style={[
                   styles.languageButton,
                   i18n.language === "fr" && styles.selectedLanguage,
+                  { borderColor: theme.primary },
                 ]}
                 onPress={() => i18n.changeLanguage("fr")}
               >
@@ -32,6 +40,7 @@ const SettingsScreen = () => {
                   style={[
                     styles.languageButtonText,
                     i18n.language === "fr" && styles.selectedLanguageText,
+                    { color: theme.primary },
                   ]}
                 >
                   Français
@@ -41,6 +50,7 @@ const SettingsScreen = () => {
                 style={[
                   styles.languageButton,
                   i18n.language === "en" && styles.selectedLanguage,
+                  { borderColor: theme.primary },
                 ]}
                 onPress={() => i18n.changeLanguage("en")}
               >
@@ -48,6 +58,7 @@ const SettingsScreen = () => {
                   style={[
                     styles.languageButtonText,
                     i18n.language === "en" && styles.selectedLanguageText,
+                    { color: theme.primary },
                   ]}
                 >
                   English
@@ -55,6 +66,8 @@ const SettingsScreen = () => {
               </TouchableOpacity>
             </View>
           </View>
+
+          
         </View>
       </View>
     </ScrollView>
@@ -64,11 +77,9 @@ const SettingsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
   },
   section: {
     marginBottom: 20,
-    backgroundColor: "#FFFFFF",
     borderRadius: 10,
     padding: 15,
     margin: 10,
@@ -82,19 +93,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 15,
-    color: "#075E54",
   },
   sectionContent: {
     marginTop: 10,
   },
   settingItem: {
-    marginBottom: 10,
+    marginBottom: 20,
   },
   settingLabel: {
     fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 5,
-    color: "#075E54",
+    marginBottom: 10,
   },
   languageButtons: {
     flexDirection: "row",
@@ -104,7 +113,6 @@ const styles = StyleSheet.create({
   languageButton: {
     padding: 10,
     borderWidth: 2,
-    borderColor: "#075E54",
     borderRadius: 5,
   },
   selectedLanguage: {
@@ -113,9 +121,28 @@ const styles = StyleSheet.create({
   languageButtonText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#075E54",
   },
   selectedLanguageText: {
+    color: "#FFFFFF",
+  },
+  themeButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  themeButton: {
+    padding: 10,
+    borderWidth: 2,
+    borderRadius: 5,
+  },
+  selectedTheme: {
+    backgroundColor: "#075E54",
+  },
+  themeButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  selectedThemeText: {
     color: "#FFFFFF",
   },
 });

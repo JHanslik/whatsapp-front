@@ -12,13 +12,16 @@ import {
   Alert,
   Keyboard,
   useWindowDimensions,
+  Switch,
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { createMessage, getConversationMessages } from "../services/api";
+import { useTheme } from "../context/ThemeContext";
 
 const ConversationScreen = ({ route, navigation }) => {
   const { t } = useTranslation();
   const { conversationId, contactName, userId } = route.params;
+  const { theme, currentTheme, toggleTheme } = useTheme();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -128,11 +131,13 @@ const ConversationScreen = ({ route, navigation }) => {
         <View
           style={[
             styles.messageBubble,
-            isOwnMessage ? styles.ownBubble : styles.otherBubble,
+            isOwnMessage 
+              ? [styles.ownBubble, { backgroundColor: theme.accent }]
+              : [styles.otherBubble, { backgroundColor: theme.surface }],
           ]}
         >
-          <Text style={styles.messageText}>{item.text}</Text>
-          <Text style={styles.messageTime}>
+          <Text style={[styles.messageText, { color: theme.text }]}>{item.text}</Text>
+          <Text style={[styles.messageTime, { color: theme.textSecondary }]}>
             {new Date(item.createdAt).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
@@ -145,14 +150,14 @@ const ConversationScreen = ({ route, navigation }) => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#075E54" />
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <FlatList
         ref={flatListRef}
         data={messages}
@@ -179,17 +184,23 @@ const ConversationScreen = ({ route, navigation }) => {
               : 0,
             left: 0,
             right: 0,
+            backgroundColor: theme.surface,
+            borderTopColor: theme.border,
           },
         ]}
       >
         <TextInput
-          style={styles.input}
+          style={[styles.input, { color: theme.text, backgroundColor: theme.background }]}
           value={newMessage}
           onChangeText={setNewMessage}
           placeholder={t("chat.messagePlaceholder")}
+          placeholderTextColor={theme.textSecondary}
           multiline
         />
-        <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
+        <TouchableOpacity 
+          style={[styles.sendButton, { backgroundColor: theme.primary }]} 
+          onPress={handleSendMessage}
+        >
           <Text style={styles.sendButtonText}>{t("common.send")}</Text>
         </TouchableOpacity>
       </View>
@@ -200,7 +211,6 @@ const ConversationScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ECE5DD",
   },
   messagesList: {
     flex: 1,
@@ -246,21 +256,17 @@ const styles = StyleSheet.create({
   },
   messageText: {
     fontSize: 16,
-    color: "#000000",
   },
   messageTime: {
     fontSize: 12,
-    color: "#7C7C7C",
     alignSelf: "flex-end",
     marginTop: 2,
   },
   inputContainer: {
     flexDirection: "row",
     padding: 10,
-    backgroundColor: "#FFFFFF",
     alignItems: "center",
     borderTopWidth: 1,
-    borderTopColor: "#E8E8E8",
     paddingBottom: Platform.OS === "android" ? 10 : 10,
     elevation: 3,
     shadowColor: "#000",
@@ -273,7 +279,6 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 8,
@@ -282,7 +287,6 @@ const styles = StyleSheet.create({
     maxHeight: 100,
   },
   sendButton: {
-    backgroundColor: "#075E54",
     borderRadius: 25,
     paddingVertical: 8,
     paddingHorizontal: 15,
