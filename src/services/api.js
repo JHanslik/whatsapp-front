@@ -71,12 +71,9 @@ export const addContact = async (userId, contactId) => {
 
 export const searchContact = async (phone) => {
   try {
-    const formattedPhone = phone.startsWith("+")
-      ? phone
-      : `+33${phone.replace(/^0/, "")}`;
-    const response = await api.get(
-      `/users/search/${encodeURIComponent(formattedPhone)}`
-    );
+    const url = `/users/search/${encodeURIComponent(phone)}`;
+    const response = await api.get(url);
+
     if (!response.data) {
       throw new Error("Contact non trouvé");
     }

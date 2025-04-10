@@ -29,9 +29,12 @@ const RegisterScreen = ({ navigation }) => {
       return false;
     }
 
-    // Validation simple du numéro de téléphone (ajustez selon vos besoins)
-    if (!/^\d{10}$/.test(phone)) {
-      Alert.alert("Erreur", "Le numéro de téléphone doit contenir 10 chiffres");
+    // Nouvelle validation du numéro de téléphone qui accepte +33 et 0
+    if (!/^(\+33|0)[1-9]\d{8}$/.test(phone)) {
+      Alert.alert(
+        "Erreur",
+        "Le numéro de téléphone doit être au format +33XXXXXXXXX ou 0XXXXXXXXX"
+      );
       return false;
     }
 

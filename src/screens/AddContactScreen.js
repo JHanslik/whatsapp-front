@@ -42,7 +42,7 @@ const AddContactScreen = ({ navigation, route }) => {
       const userContacts = await getUserContacts(userId);
       setContacts(userContacts);
     } catch (error) {
-      console.error("Erreur lors du chargement des contacts:", error);
+      Alert.alert("Erreur", "Impossible de charger les contacts");
     }
   };
 
