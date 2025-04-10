@@ -118,6 +118,55 @@ export const logoutUser = async () => {
   }
 };
 
+export const createConversation = async (participants) => {
+  try {
+    const response = await api.post("/conversations", { participants });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+};
+
+export const getUserConversations = async (userId) => {
+  try {
+    const response = await api.get(`/conversations/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+};
+
+export const createMessage = async ({ conversationId, senderId, text }) => {
+  try {
+    const response = await api.post("/messages", {
+      conversationId,
+      senderId,
+      text,
+    });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+};
+
+export const getConversationMessages = async (conversationId) => {
+  try {
+    const response = await api.get(`/messages/conversation/${conversationId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+};
+
+export const deleteConversation = async (conversationId) => {
+  try {
+    const response = await api.delete(`/conversations/${conversationId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+};
+
 const handleApiError = (error) => {
   if (error.response) {
     throw error.response.data;
