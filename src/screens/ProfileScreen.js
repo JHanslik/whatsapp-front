@@ -9,17 +9,16 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import { getUserProfile, updateUserProfile } from "../services/api";
 
 const ProfileScreen = ({ route, navigation }) => {
+  const { t } = useTranslation();
   // Vérifier si l'ID utilisateur est présent dans les paramètres de route
   const userId = route.params?.userId;
-  
+
   if (!userId) {
-    Alert.alert(
-      "Erreur",
-      "ID utilisateur non trouvé. Veuillez vous reconnecter."
-    );
+    Alert.alert(t("common.error"), t("profile.userIdNotFound"));
     navigation.navigate("Login");
     return null;
   }
@@ -45,11 +44,8 @@ const ProfileScreen = ({ route, navigation }) => {
         setPhone(userData.phone || "");
         setError(null);
       } catch (err) {
-        setError("Impossible de charger les informations du profil");
-        Alert.alert(
-          "Erreur",
-          err.message || "Erreur lors du chargement du profil"
-        );
+        setError(t("profile.loadError"));
+        Alert.alert(t("common.error"), err.message || t("profile.loadError"));
       } finally {
         setFetchingProfile(false);
       }
@@ -60,22 +56,19 @@ const ProfileScreen = ({ route, navigation }) => {
 
   const validateForm = () => {
     if (!firstName || !lastName) {
-      Alert.alert("Erreur", "Le prénom et le nom sont obligatoires");
+      Alert.alert(t("common.error"), t("profile.nameRequired"));
       return false;
     }
 
     if (password || confirmPassword) {
       if (password !== confirmPassword) {
-        Alert.alert("Erreur", "Les mots de passe ne correspondent pas");
+        Alert.alert(t("common.error"), t("auth.passwordsDontMatch"));
         return false;
       }
 
       // Validation du mot de passe (au moins 6 caractères)
       if (password.length < 6) {
-        Alert.alert(
-          "Erreur",
-          "Le mot de passe doit contenir au moins 6 caractères"
-        );
+        Alert.alert(t("common.error"), t("auth.passwordLength"));
         return false;
       }
     }
@@ -100,16 +93,13 @@ const ProfileScreen = ({ route, navigation }) => {
       }
 
       await updateUserProfile(userId, profileData);
-      Alert.alert("Succès", "Profil mis à jour avec succès");
+      Alert.alert(t("common.success"), t("profile.updateSuccess"));
 
       // Réinitialiser les champs de mot de passe
       setPassword("");
       setConfirmPassword("");
     } catch (error) {
-      Alert.alert(
-        "Erreur",
-        error.message || "Échec de la mise à jour du profil"
-      );
+      Alert.alert(t("common.error"), error.message || t("profile.updateError"));
     } finally {
       setLoading(false);
     }
@@ -119,7 +109,7 @@ const ProfileScreen = ({ route, navigation }) => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#075E54" />
-        <Text style={styles.loadingText}>Chargement du profil...</Text>
+        <Text style={styles.loadingText}>{t("common.loading")}</Text>
       </View>
     );
   }
@@ -129,42 +119,40 @@ const ProfileScreen = ({ route, navigation }) => {
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
     >
-      <Text style={styles.title}>Modifier votre profil</Text>
+      <Text style={styles.title}>{t("profile.edit")}</Text>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Informations personnelles</Text>
+        <Text style={styles.sectionTitle}>{t("profile.personalInfo")}</Text>
 
         <TextInput
           style={styles.input}
-          placeholder="Prénom"
+          placeholder={t("profile.name")}
           value={firstName}
           onChangeText={setFirstName}
         />
 
         <TextInput
           style={styles.input}
-          placeholder="Nom"
+          placeholder={t("profile.lastName")}
           value={lastName}
           onChangeText={setLastName}
         />
 
         <TextInput
           style={[styles.input, styles.disabledInput]}
-          placeholder="Numéro de téléphone"
+          placeholder={t("profile.phone")}
           value={phone}
           editable={false}
         />
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Changer de mot de passe</Text>
-        <Text style={styles.sectionSubtitle}>
-          Laissez vide pour conserver le mot de passe actuel
-        </Text>
+        <Text style={styles.sectionTitle}>{t("profile.changePassword")}</Text>
+        <Text style={styles.sectionSubtitle}>{t("profile.passwordHint")}</Text>
 
         <TextInput
           style={styles.input}
-          placeholder="Nouveau mot de passe"
+          placeholder={t("auth.password")}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -172,7 +160,7 @@ const ProfileScreen = ({ route, navigation }) => {
 
         <TextInput
           style={styles.input}
-          placeholder="Confirmer le mot de passe"
+          placeholder={t("auth.confirmPassword")}
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           secureTextEntry
@@ -187,7 +175,7 @@ const ProfileScreen = ({ route, navigation }) => {
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Mettre à jour le profil</Text>
+          <Text style={styles.buttonText}>{t("profile.saveChanges")}</Text>
         )}
       </TouchableOpacity>
 
@@ -195,7 +183,7 @@ const ProfileScreen = ({ route, navigation }) => {
         style={styles.cancelButton}
         onPress={() => navigation.goBack()}
       >
-        <Text style={styles.cancelButtonText}>Annuler</Text>
+        <Text style={styles.cancelButtonText}>{t("common.cancel")}</Text>
       </TouchableOpacity>
     </ScrollView>
   );

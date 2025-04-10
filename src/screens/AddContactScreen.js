@@ -13,6 +13,7 @@ import {
   FlatList,
   Modal,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import {
   searchContact,
   addContact,
@@ -21,9 +22,10 @@ import {
   updateContactAlias,
   createConversation,
 } from "../services/api";
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 
 const AddContactScreen = ({ navigation, route }) => {
+  const { t } = useTranslation();
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [searchResult, setSearchResult] = useState(null);
@@ -44,13 +46,13 @@ const AddContactScreen = ({ navigation, route }) => {
       const userContacts = await getUserContacts(userId);
       setContacts(userContacts);
     } catch (error) {
-      Alert.alert("Erreur", "Impossible de charger les contacts");
+      Alert.alert(t("common.error"), t("chat.loadError"));
     }
   };
 
   const handleSearch = async () => {
     if (!phone) {
-      Alert.alert("Erreur", "Veuillez entrer un numéro de téléphone");
+      Alert.alert(t("common.error"), t("chat.phoneRequired"));
       return;
     }
 
@@ -59,7 +61,10 @@ const AddContactScreen = ({ navigation, route }) => {
       const result = await searchContact(phone);
       setSearchResult(result);
     } catch (error) {
-      Alert.alert("Erreur", error.message || "Contact non trouvé");
+      Alert.alert(
+        t("common.error"),
+        error.message || t("chat.contactNotFound")
+      );
       setSearchResult(null);
     } finally {
       setLoading(false);
@@ -68,21 +73,21 @@ const AddContactScreen = ({ navigation, route }) => {
 
   const handleAddContact = async () => {
     if (!searchResult) {
-      Alert.alert("Erreur", "Veuillez d'abord rechercher un contact");
+      Alert.alert(t("common.error"), t("chat.searchFirst"));
       return;
     }
 
     setLoading(true);
     try {
       await addContact(userId, searchResult._id);
-      Alert.alert("Succès", "Contact ajouté avec succès");
+      Alert.alert(t("common.success"), t("chat.contactAdded"));
       await loadContacts(); // Recharger la liste des contacts
       setSearchResult(null);
       setPhone("");
     } catch (error) {
       Alert.alert(
-        "Erreur",
-        error.message || "Erreur lors de l'ajout du contact"
+        t("common.error"),
+        error.message || t("chat.addContactError")
       );
     } finally {
       setLoading(false);
@@ -92,23 +97,23 @@ const AddContactScreen = ({ navigation, route }) => {
   const handleDeleteContact = async (contactId) => {
     try {
       await deleteContact(contactId);
-      Alert.alert("Succès", "Contact supprimé avec succès");
+      Alert.alert(t("common.success"), t("chat.contactDeleted"));
       loadContacts(); // Recharger la liste
     } catch (error) {
-      Alert.alert("Erreur", error.message || "Erreur lors de la suppression");
+      Alert.alert(t("common.error"), error.message || t("chat.deleteError"));
     }
   };
 
   const handleUpdateAlias = async () => {
     try {
       await updateContactAlias(selectedContact._id, newAlias);
-      Alert.alert("Succès", "Alias mis à jour avec succès");
+      Alert.alert(t("common.success"), t("chat.aliasUpdated"));
       setIsModalVisible(false);
       setSelectedContact(null);
       setNewAlias("");
       loadContacts(); // Recharger la liste
     } catch (error) {
-      Alert.alert("Erreur", error.message || "Erreur lors de la mise à jour");
+      Alert.alert(t("common.error"), error.message || t("chat.updateError"));
     }
   };
 
@@ -133,7 +138,7 @@ const AddContactScreen = ({ navigation, route }) => {
         userId: userId,
       });
     } catch (error) {
-      Alert.alert("Erreur", "Impossible d'ouvrir la conversation");
+      Alert.alert(t("common.error"), t("chat.openConversationError"));
     }
   };
 
@@ -178,12 +183,12 @@ const AddContactScreen = ({ navigation, route }) => {
     >
       <SafeAreaView style={styles.innerContainer}>
         <View style={styles.content}>
-          <Text style={styles.title}>Ajouter un contact</Text>
+          <Text style={styles.title}>{t("chat.newMessage")}</Text>
 
           <View style={styles.searchContainer}>
             <TextInput
               style={styles.input}
-              placeholder="Numéro de téléphone"
+              placeholder={t("profile.phone")}
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
@@ -196,14 +201,16 @@ const AddContactScreen = ({ navigation, route }) => {
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.searchButtonText}>Rechercher</Text>
+                <Text style={styles.searchButtonText}>
+                  {t("common.search")}
+                </Text>
               )}
             </TouchableOpacity>
           </View>
 
           {searchResult && (
             <View style={styles.resultContainer}>
-              <Text style={styles.resultTitle}>Contact trouvé :</Text>
+              <Text style={styles.resultTitle}>{t("chat.contactFound")}</Text>
               <View style={styles.contactCard}>
                 <View style={styles.contactInfo}>
                   <Text style={styles.contactName}>
@@ -219,14 +226,14 @@ const AddContactScreen = ({ navigation, route }) => {
                   {loading ? (
                     <ActivityIndicator color="#fff" size="small" />
                   ) : (
-                    <Text style={styles.addButtonText}>Ajouter</Text>
+                    <Text style={styles.addButtonText}>{t("common.add")}</Text>
                   )}
                 </TouchableOpacity>
               </View>
             </View>
           )}
 
-          <Text style={styles.sectionTitle}>Mes contacts</Text>
+          <Text style={styles.sectionTitle}>{t("chat.myContacts")}</Text>
           <FlatList
             data={contacts}
             renderItem={renderContactItem}
@@ -243,7 +250,7 @@ const AddContactScreen = ({ navigation, route }) => {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Modifier l'alias</Text>
+              <Text style={styles.modalTitle}>{t("chat.editAlias")}</Text>
 
               <View style={styles.modalContactInfo}>
                 <Text style={styles.modalContactName}>
@@ -257,28 +264,27 @@ const AddContactScreen = ({ navigation, route }) => {
 
               <TextInput
                 style={styles.modalInput}
-                placeholder="Nouvel alias"
+                placeholder={t("chat.aliasPlaceholder")}
                 value={newAlias}
                 onChangeText={setNewAlias}
-                autoFocus={true}
               />
 
               <View style={styles.modalButtons}>
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.modalCancelButton]}
-                  onPress={() => {
-                    setIsModalVisible(false);
-                    setSelectedContact(null);
-                    setNewAlias("");
-                  }}
+                  style={styles.modalCancelButton}
+                  onPress={() => setIsModalVisible(false)}
                 >
-                  <Text style={styles.modalButtonText}>Annuler</Text>
+                  <Text style={styles.modalCancelButtonText}>
+                    {t("common.cancel")}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.modalSaveButton]}
+                  style={styles.modalSaveButton}
                   onPress={handleUpdateAlias}
                 >
-                  <Text style={styles.modalButtonText}>Enregistrer</Text>
+                  <Text style={styles.modalSaveButtonText}>
+                    {t("common.save")}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -480,19 +486,18 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 10,
   },
-  modalButton: {
-    flex: 1,
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-  },
   modalCancelButton: {
     backgroundColor: "#6C757D",
   },
   modalSaveButton: {
     backgroundColor: "#075E54",
   },
-  modalButtonText: {
+  modalCancelButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  modalSaveButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",

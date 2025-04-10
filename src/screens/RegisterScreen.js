@@ -8,9 +8,11 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import { registerUser } from "../services/api";
 
 const RegisterScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [phone, setPhone] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -20,21 +22,18 @@ const RegisterScreen = ({ navigation }) => {
 
   const validateForm = () => {
     if (!phone || !firstName || !lastName || !password || !confirmPassword) {
-      Alert.alert("Erreur", "Tous les champs sont obligatoires");
+      Alert.alert(t("common.error"), t("auth.fillAllFields"));
       return false;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert("Erreur", "Les mots de passe ne correspondent pas");
+      Alert.alert(t("common.error"), t("auth.passwordsDontMatch"));
       return false;
     }
 
     // Nouvelle validation du numéro de téléphone qui accepte +33 et 0
     if (!/^(\+33|0)[1-9]\d{8}$/.test(phone)) {
-      Alert.alert(
-        "Erreur",
-        "Le numéro de téléphone doit être au format +33XXXXXXXXX ou 0XXXXXXXXX"
-      );
+      Alert.alert(t("common.error"), t("auth.invalidPhoneFormat"));
       return false;
     }
 
@@ -48,11 +47,11 @@ const RegisterScreen = ({ navigation }) => {
     try {
       const userData = { phone, firstName, lastName, password };
       await registerUser(userData);
-      Alert.alert("Succès", "Compte créé avec succès", [
-        { text: "OK", onPress: () => navigation.navigate("Login") },
+      Alert.alert(t("common.success"), t("auth.registerSuccess"), [
+        { text: t("common.ok"), onPress: () => navigation.navigate("Login") },
       ]);
     } catch (error) {
-      Alert.alert("Erreur", error.message || "Échec de la création du compte");
+      Alert.alert(t("common.error"), error.message || t("auth.registerFailed"));
     } finally {
       setLoading(false);
     }
@@ -60,11 +59,11 @@ const RegisterScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Créer un compte</Text>
+      <Text style={styles.title}>{t("auth.register")}</Text>
 
       <TextInput
         style={styles.input}
-        placeholder="Numéro de téléphone"
+        placeholder={t("profile.phone")}
         value={phone}
         onChangeText={setPhone}
         keyboardType="phone-pad"
@@ -72,21 +71,21 @@ const RegisterScreen = ({ navigation }) => {
 
       <TextInput
         style={styles.input}
-        placeholder="Prénom"
+        placeholder={t("profile.name")}
         value={firstName}
         onChangeText={setFirstName}
       />
 
       <TextInput
         style={styles.input}
-        placeholder="Nom"
+        placeholder={t("profile.lastName")}
         value={lastName}
         onChangeText={setLastName}
       />
 
       <TextInput
         style={styles.input}
-        placeholder="Mot de passe"
+        placeholder={t("auth.password")}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -94,7 +93,7 @@ const RegisterScreen = ({ navigation }) => {
 
       <TextInput
         style={styles.input}
-        placeholder="Confirmer le mot de passe"
+        placeholder={t("auth.confirmPassword")}
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
@@ -108,7 +107,7 @@ const RegisterScreen = ({ navigation }) => {
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>S'inscrire</Text>
+          <Text style={styles.buttonText}>{t("auth.register")}</Text>
         )}
       </TouchableOpacity>
 
@@ -116,7 +115,7 @@ const RegisterScreen = ({ navigation }) => {
         style={styles.loginLink}
         onPress={() => navigation.navigate("Login")}
       >
-        <Text style={styles.loginText}>Déjà un compte ? Connectez-vous</Text>
+        <Text style={styles.loginText}>{t("auth.haveAccount")}</Text>
       </TouchableOpacity>
     </View>
   );

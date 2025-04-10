@@ -13,9 +13,11 @@ import {
   Keyboard,
   useWindowDimensions,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import { createMessage, getConversationMessages } from "../services/api";
 
 const ConversationScreen = ({ route, navigation }) => {
+  const { t } = useTranslation();
   const { conversationId, contactName, userId } = route.params;
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -66,7 +68,7 @@ const ConversationScreen = ({ route, navigation }) => {
         flatListRef.current?.scrollToEnd();
       }
     } catch (error) {
-      Alert.alert("Erreur", "Impossible de charger les messages");
+      Alert.alert(t("common.error"), t("chat.loadError"));
     } finally {
       setLoading(false);
     }
@@ -104,7 +106,7 @@ const ConversationScreen = ({ route, navigation }) => {
       );
     } catch (error) {
       console.log("Erreur d'envoi:", error);
-      Alert.alert("Erreur", "Impossible d'envoyer le message");
+      Alert.alert(t("common.error"), t("chat.sendError"));
       // En cas d'erreur, retirer le message local
       setMessages((prevMessages) =>
         prevMessages.filter((msg) => msg._id !== localMessage._id)
@@ -184,11 +186,11 @@ const ConversationScreen = ({ route, navigation }) => {
           style={styles.input}
           value={newMessage}
           onChangeText={setNewMessage}
-          placeholder="Écrivez un message..."
+          placeholder={t("chat.messagePlaceholder")}
           multiline
         />
         <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
-          <Text style={styles.sendButtonText}>Envoyer</Text>
+          <Text style={styles.sendButtonText}>{t("common.send")}</Text>
         </TouchableOpacity>
       </View>
     </View>
