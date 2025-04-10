@@ -10,6 +10,7 @@ import RegisterScreen from "./src/screens/RegisterScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
 import HomeScreen from "./src/screens/HomeScreen";
 import AddContactScreen from "./src/screens/AddContactScreen";
+import ConversationScreen from "./src/screens/ConversationScreen";
 
 const Stack = createStackNavigator();
 
@@ -54,6 +55,17 @@ export default function App() {
             name="AddContact"
             component={AddContactScreen}
             options={{ title: "Ajouter un contact" }}
+          />
+          <Stack.Screen
+            name="Conversation"
+            component={ConversationScreen}
+            options={({ route }) => ({
+              title: route.params?.contactName || "Conversation",
+              headerStyle: {
+                backgroundColor: "#075E54",
+              },
+              headerTintColor: "#fff",
+            })}
           />
         </Stack.Navigator>
       </NavigationContainer>

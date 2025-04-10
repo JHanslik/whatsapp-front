@@ -19,6 +19,7 @@ import {
   getUserContacts,
   deleteContact,
   updateContactAlias,
+  createConversation,
 } from "../services/api";
 
 const AddContactScreen = ({ navigation, route }) => {
@@ -116,6 +117,25 @@ const AddContactScreen = ({ navigation, route }) => {
     setIsModalVisible(true);
   };
 
+  const handleOpenConversation = async (contact) => {
+    try {
+      // Créer ou récupérer une conversation existante
+      const participants = [userId, contact.contactId._id];
+      const conversation = await createConversation(participants);
+
+      // Naviguer vers l'écran de conversation
+      navigation.navigate("Conversation", {
+        conversationId: conversation._id,
+        contactName:
+          contact.alias ||
+          `${contact.contactId.firstName} ${contact.contactId.lastName}`,
+        userId: userId,
+      });
+    } catch (error) {
+      Alert.alert("Erreur", "Impossible d'ouvrir la conversation");
+    }
+  };
+
   const renderContactItem = ({ item }) => (
     <View style={styles.contactItem}>
       <View style={styles.contactInfo}>
@@ -127,6 +147,12 @@ const AddContactScreen = ({ navigation, route }) => {
       </View>
 
       <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={styles.chatButton}
+          onPress={() => handleOpenConversation(item)}
+        >
+          <Text style={styles.buttonText}>Discuter</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.editButton}
           onPress={() => openEditModal(item)}
@@ -464,6 +490,14 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  chatButton: {
+    backgroundColor: "#25D366", // Couleur verte WhatsApp
+    padding: 8,
+    borderRadius: 5,
+    minWidth: 70,
+    alignItems: "center",
+    marginRight: 8,
   },
 });
 
