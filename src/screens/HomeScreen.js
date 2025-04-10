@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import {
   logoutUser,
   getUserConversations,
@@ -19,6 +20,7 @@ import {
 } from "../services/api";
 
 const HomeScreen = ({ route, navigation }) => {
+  const { t } = useTranslation();
   const userId = route.params?.userId;
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,36 +56,32 @@ const HomeScreen = ({ route, navigation }) => {
 
       setConversations(sortedConversations);
     } catch (error) {
-      Alert.alert("Erreur", "Impossible de charger les conversations");
+      Alert.alert(t("common.error"), t("chat.loadError"));
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteConversation = async (conversationId) => {
-    Alert.alert(
-      "Supprimer la conversation",
-      "Êtes-vous sûr de vouloir supprimer cette conversation ?",
-      [
-        {
-          text: "Annuler",
-          style: "cancel",
+    Alert.alert(t("chat.deleteTitle"), t("chat.deleteConfirm"), [
+      {
+        text: t("common.cancel"),
+        style: "cancel",
+      },
+      {
+        text: t("common.delete"),
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteConversation(conversationId);
+            // Recharger la liste des conversations
+            loadConversations();
+          } catch (error) {
+            Alert.alert(t("common.error"), t("chat.deleteError"));
+          }
         },
-        {
-          text: "Supprimer",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteConversation(conversationId);
-              // Recharger la liste des conversations
-              loadConversations();
-            } catch (error) {
-              Alert.alert("Erreur", "Impossible de supprimer la conversation");
-            }
-          },
-        },
-      ]
-    );
+      },
+    ]);
   };
 
   const renderHeader = () => (
@@ -97,7 +95,7 @@ const HomeScreen = ({ route, navigation }) => {
           <View style={[styles.actionIcon, { backgroundColor: "#075E54" }]}>
             <Text style={styles.actionIconText}>👤</Text>
           </View>
-          <Text style={styles.actionText}>Profil</Text>
+          <Text style={styles.actionText}>{t("profile.edit")}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -111,10 +109,10 @@ const HomeScreen = ({ route, navigation }) => {
           <View style={[styles.actionIcon, { backgroundColor: "#25D366" }]}>
             <Text style={styles.actionIconText}>💬</Text>
           </View>
-          <Text style={styles.actionText}>Nouveau Chat</Text>
+          <Text style={styles.actionText}>{t("chat.newMessage")}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton}>
+        {/* <TouchableOpacity style={styles.actionButton}>
           <View style={[styles.actionIcon, { backgroundColor: "#128C7E" }]}>
             <Text style={styles.actionIconText}>👥</Text>
           </View>
@@ -126,10 +124,10 @@ const HomeScreen = ({ route, navigation }) => {
             <Text style={styles.actionIconText}>📞</Text>
           </View>
           <Text style={styles.actionText}>Appels</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
-      <Text style={styles.sectionTitle}>Conversations récentes</Text>
+      <Text style={styles.sectionTitle}>{t("chat.recentConversations")}</Text>
     </>
   );
 
@@ -138,7 +136,7 @@ const HomeScreen = ({ route, navigation }) => {
       item.participants?.find((p) => p._id !== userId) || {};
     const lastMessageText = item.lastMessage
       ? item.lastMessage.text
-      : "Aucun message";
+      : t("chat.noMessages");
     const lastMessageTime = item.lastMessage
       ? new Date(item.lastMessage.createdAt).toLocaleTimeString([], {
           hour: "2-digit",
@@ -149,7 +147,7 @@ const HomeScreen = ({ route, navigation }) => {
     const contactName =
       otherParticipant.firstName && otherParticipant.lastName
         ? `${otherParticipant.firstName} ${otherParticipant.lastName}`
-        : "Contact inconnu";
+        : t("chat.unknownContact");
 
     return (
       <View style={styles.conversationItem}>
@@ -160,7 +158,7 @@ const HomeScreen = ({ route, navigation }) => {
               conversationId: item._id,
               contactName: otherParticipant
                 ? `${otherParticipant.firstName} ${otherParticipant.lastName}`
-                : "Contact",
+                : t("chat.contact"),
               userId: userId,
             })
           }
@@ -191,13 +189,13 @@ const HomeScreen = ({ route, navigation }) => {
   };
 
   const handleLogout = async () => {
-    Alert.alert("Déconnexion", "Êtes-vous sûr de vouloir vous déconnecter ?", [
+    Alert.alert(t("auth.logout"), t("auth.logoutConfirm"), [
       {
-        text: "Annuler",
+        text: t("common.cancel"),
         style: "cancel",
       },
       {
-        text: "Déconnexion",
+        text: t("auth.logout"),
         style: "destructive",
         onPress: async () => {
           try {
@@ -207,7 +205,7 @@ const HomeScreen = ({ route, navigation }) => {
               routes: [{ name: "Login" }],
             });
           } catch (error) {
-            Alert.alert("Erreur", "Impossible de se déconnecter");
+            Alert.alert(t("common.error"), t("auth.logoutError"));
           }
         },
       },
@@ -228,6 +226,13 @@ const HomeScreen = ({ route, navigation }) => {
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <MaterialIcons name="logout" size={24} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={() => navigation.navigate("Settings")}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialIcons name="settings" size={24} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.profileButton}
@@ -278,6 +283,9 @@ const styles = StyleSheet.create({
     gap: 15,
   },
   logoutButton: {
+    padding: 5,
+  },
+  settingsButton: {
     padding: 5,
   },
   profileButton: {

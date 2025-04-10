@@ -8,17 +8,19 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import { loginUser } from "../services/api";
 import { setAuthToken } from "../services/authStorage";
 
 const LoginScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!phone || !password) {
-      Alert.alert("Erreur", "Veuillez remplir tous les champs");
+      Alert.alert(t("common.error"), t("auth.fillAllFields"));
       return;
     }
 
@@ -26,10 +28,10 @@ const LoginScreen = ({ navigation }) => {
     try {
       const userData = await loginUser({ phone, password });
       await setAuthToken(userData.token);
-      Alert.alert("Succès", "Connexion réussie");
+      Alert.alert(t("common.success"), t("auth.loginSuccess"));
       navigation.navigate("Home", { userId: userData.user._id });
     } catch (error) {
-      Alert.alert("Erreur", error.message || "Échec de la connexion");
+      Alert.alert(t("common.error"), error.message || t("auth.loginFailed"));
     } finally {
       setLoading(false);
     }
@@ -37,11 +39,11 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Connexion</Text>
+      <Text style={styles.title}>{t("auth.login")}</Text>
 
       <TextInput
         style={styles.input}
-        placeholder="Numéro de téléphone"
+        placeholder={t("profile.phone")}
         value={phone}
         onChangeText={setPhone}
         keyboardType="phone-pad"
@@ -49,7 +51,7 @@ const LoginScreen = ({ navigation }) => {
 
       <TextInput
         style={styles.input}
-        placeholder="Mot de passe"
+        placeholder={t("auth.password")}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -63,7 +65,7 @@ const LoginScreen = ({ navigation }) => {
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Se connecter</Text>
+          <Text style={styles.buttonText}>{t("auth.login")}</Text>
         )}
       </TouchableOpacity>
 
@@ -71,7 +73,7 @@ const LoginScreen = ({ navigation }) => {
         style={styles.registerLink}
         onPress={() => navigation.navigate("Register")}
       >
-        <Text style={styles.registerText}>Pas de compte ? Inscrivez-vous</Text>
+        <Text style={styles.registerText}>{t("auth.noAccount")}</Text>
       </TouchableOpacity>
     </View>
   );
