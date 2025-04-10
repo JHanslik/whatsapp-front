@@ -1,6 +1,6 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createStackNavigator } from "@react-navigation/stack";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "./src/translations/i18n";
@@ -17,7 +17,7 @@ import AddContactScreen from "./src/screens/AddContactScreen";
 import ConversationScreen from "./src/screens/ConversationScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 
-const Stack = createNativeStackNavigator();
+const Stack = createStackNavigator();
 
 const AppContent = () => {
   const { t, i18n } = useTranslation();
@@ -37,6 +37,7 @@ const AppContent = () => {
             headerTitleStyle: {
               fontWeight: "bold",
             },
+            cardStyle: { backgroundColor: theme.background },
           }}
         >
           <Stack.Screen
@@ -74,12 +75,18 @@ const AppContent = () => {
               },
               headerTintColor: "#fff",
               headerRight: () => (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 10 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginRight: 10,
+                  }}
+                >
                   <Switch
-                    value={currentTheme === 'dark'}
+                    value={currentTheme === "dark"}
                     onValueChange={toggleTheme}
-                    trackColor={{ false: '#767577', true: '#81b0ff' }}
-                    thumbColor={currentTheme === 'dark' ? '#f5dd4b' : '#f4f3f4'}
+                    trackColor={{ false: "#767577", true: "#81b0ff" }}
+                    thumbColor={currentTheme === "dark" ? "#f5dd4b" : "#f4f3f4"}
                   />
                 </View>
               ),
