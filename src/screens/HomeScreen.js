@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   logoutUser,
   getUserConversations,
@@ -29,11 +30,58 @@ const HomeScreen = ({ route, navigation }) => {
   const [loading, setLoading] = useState(true);
   const [scaleAnim] = useState(new Animated.Value(1));
   const [userProfile, setUserProfile] = useState(null);
+  const [unreadMessages, setUnreadMessages] = useState({});
+  const intervalRef = useRef(null);
+  const previousConversationsRef = useRef([]);
 
   useEffect(() => {
     loadConversations();
     loadUserProfile();
+
+    // Configuration d'un intervalle pour rafraîchir les conversations automatiquement
+    intervalRef.current = setInterval(() => {
+      loadConversations();
+      checkOpenedConversations();
+    }, 1000); // Rafraîchissement toutes les secondes (au lieu de 5 secondes)
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, []);
+
+  // Vérifier si des conversations ont été ouvertes et réinitialiser leurs compteurs
+  const checkOpenedConversations = async () => {
+    try {
+      const openedConversations = await AsyncStorage.getItem(
+        "openedConversations"
+      );
+
+      if (openedConversations) {
+        const conversationsArray = JSON.parse(openedConversations);
+
+        if (conversationsArray.length > 0) {
+          // Réinitialiser les compteurs pour ces conversations
+          const updatedUnreadMessages = { ...unreadMessages };
+
+          conversationsArray.forEach((convId) => {
+            updatedUnreadMessages[convId] = 0;
+          });
+
+          setUnreadMessages(updatedUnreadMessages);
+
+          // Vider la liste des conversations ouvertes
+          await AsyncStorage.setItem("openedConversations", JSON.stringify([]));
+        }
+      }
+    } catch (error) {
+      console.error(
+        "Erreur lors de la vérification des conversations ouvertes:",
+        error
+      );
+    }
+  };
 
   const loadConversations = async () => {
     try {
@@ -47,6 +95,7 @@ const HomeScreen = ({ route, navigation }) => {
             ...conv,
             lastMessage:
               messages.length > 0 ? messages[messages.length - 1] : null,
+            messages: messages,
           };
         })
       );
@@ -59,6 +108,43 @@ const HomeScreen = ({ route, navigation }) => {
           new Date(b.lastMessage.createdAt) - new Date(a.lastMessage.createdAt)
         );
       });
+
+      // Mettre à jour les messages non lus - ne réinitialiser que si on ouvre explicitement la conversation
+      if (previousConversationsRef.current.length > 0) {
+        const updatedUnreadMessages = { ...unreadMessages };
+
+        sortedConversations.forEach((conv) => {
+          const prevConv = previousConversationsRef.current.find(
+            (c) => c._id === conv._id
+          );
+
+          if (prevConv && prevConv.messages && conv.messages) {
+            // Compter les nouveaux messages (messages reçus et non envoyés par l'utilisateur)
+            const newMessages = conv.messages.filter(
+              (msg) =>
+                !prevConv.messages.some((m) => m._id === msg._id) &&
+                String(msg.senderId._id || msg.senderId) !== String(userId)
+            );
+
+            if (newMessages.length > 0) {
+              updatedUnreadMessages[conv._id] =
+                (updatedUnreadMessages[conv._id] || 0) + newMessages.length;
+
+              // Mise à jour atomique pour éviter les pertes de mises à jour
+              setUnreadMessages((prev) => ({
+                ...prev,
+                [conv._id]: (prev[conv._id] || 0) + newMessages.length,
+              }));
+            }
+          }
+        });
+      }
+
+      // Sauvegarder l'état actuel pour la prochaine comparaison
+      previousConversationsRef.current = sortedConversations.map((conv) => ({
+        ...conv,
+        messages: [...(conv.messages || [])],
+      }));
 
       setConversations(sortedConversations);
     } catch (error) {
@@ -162,17 +248,58 @@ const HomeScreen = ({ route, navigation }) => {
     </>
   );
 
+  const handleConversationPress = (item) => {
+    const conversationId = item._id;
+
+    // Réinitialiser le compteur de messages non lus pour cette conversation
+    // Mise à jour immédiate et persistante
+    setUnreadMessages((prev) => ({
+      ...prev,
+      [conversationId]: 0,
+    }));
+
+    // Marquer également cette conversation comme lue dans AsyncStorage
+    const markAsRead = async () => {
+      try {
+        const openedConversations =
+          (await AsyncStorage.getItem("openedConversations")) || "[]";
+        const conversations = JSON.parse(openedConversations);
+
+        if (!conversations.includes(conversationId)) {
+          conversations.push(conversationId);
+          await AsyncStorage.setItem(
+            "openedConversations",
+            JSON.stringify(conversations)
+          );
+        }
+      } catch (error) {
+        console.error("Erreur lors du marquage comme lu:", error);
+      }
+    };
+
+    markAsRead();
+
+    const otherParticipant =
+      item.participants?.find((p) => p._id !== userId) || {};
+    navigation.navigate("Conversation", {
+      conversationId: conversationId,
+      contactName: otherParticipant
+        ? `${otherParticipant.firstName} ${otherParticipant.lastName}`
+        : t("chat.contact"),
+      userId: userId,
+    });
+  };
+
   const renderConversation = ({ item }) => {
     const otherParticipant =
       item.participants?.find((p) => p._id !== userId) || {};
     const lastMessageText = item.lastMessage
       ? item.lastMessage.text
       : t("chat.noMessages");
+
+    // Ajout du jour à l'affichage de l'heure
     const lastMessageTime = item.lastMessage
-      ? new Date(item.lastMessage.createdAt).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+      ? formatMessageDate(new Date(item.lastMessage.createdAt))
       : "";
 
     const contactName =
@@ -185,21 +312,19 @@ const HomeScreen = ({ route, navigation }) => {
       ? otherParticipant.profileImage
       : "https://via.placeholder.com/50";
 
+    // Nombre de messages non lus pour cette conversation
+    const unreadCount = unreadMessages[item._id] || 0;
+
+    // Déterminer si le dernier message est nouveau (non lu)
+    const isNewMessage = unreadCount > 0;
+
     return (
       <Animated.View
         style={[styles.conversationItem, { transform: [{ scale: scaleAnim }] }]}
       >
         <TouchableOpacity
           style={styles.conversationContent}
-          onPress={() =>
-            navigation.navigate("Conversation", {
-              conversationId: item._id,
-              contactName: otherParticipant
-                ? `${otherParticipant.firstName} ${otherParticipant.lastName}`
-                : t("chat.contact"),
-              userId: userId,
-            })
-          }
+          onPress={() => handleConversationPress(item)}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           activeOpacity={0.7}
@@ -208,12 +333,20 @@ const HomeScreen = ({ route, navigation }) => {
             source={{ uri: profileImageUri }}
             style={styles.contactImage}
           />
+          {unreadCount > 0 && (
+            <View style={styles.unreadBadge}>
+              <Text style={styles.unreadBadgeText}>{unreadCount}</Text>
+            </View>
+          )}
           <View style={styles.conversationInfo}>
             <View style={styles.conversationHeader}>
               <Text style={styles.contactName}>{contactName}</Text>
               <Text style={styles.messageTime}>{lastMessageTime}</Text>
             </View>
-            <Text style={styles.lastMessage} numberOfLines={1}>
+            <Text
+              style={[styles.lastMessage, isNewMessage && styles.newMessage]}
+              numberOfLines={1}
+            >
               {lastMessageText}
             </Text>
           </View>
@@ -228,6 +361,51 @@ const HomeScreen = ({ route, navigation }) => {
         </TouchableOpacity>
       </Animated.View>
     );
+  };
+
+  // Fonction pour formater la date du message avec le jour
+  const formatMessageDate = (date) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const messageDate = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    );
+
+    // Format pour l'heure uniquement
+    const timeFormat = {
+      hour: "2-digit",
+      minute: "2-digit",
+    };
+
+    // Aujourd'hui: afficher seulement l'heure
+    if (messageDate.getTime() === today.getTime()) {
+      return date.toLocaleTimeString([], timeFormat);
+    }
+    // Hier: afficher "Hier" et l'heure
+    else if (messageDate.getTime() === yesterday.getTime()) {
+      return `${t("common.yesterday")} ${date.toLocaleTimeString(
+        [],
+        timeFormat
+      )}`;
+    }
+    // Cette semaine: afficher le jour et l'heure
+    else if (now.getTime() - date.getTime() < 7 * 24 * 60 * 60 * 1000) {
+      return `${date.toLocaleDateString([], {
+        weekday: "short",
+      })} ${date.toLocaleTimeString([], timeFormat)}`;
+    }
+    // Plus ancien: afficher la date complète
+    else {
+      return date.toLocaleDateString([], {
+        day: "2-digit",
+        month: "2-digit",
+        year: "2-digit",
+      });
+    }
   };
 
   const handleLogout = async () => {
@@ -486,6 +664,28 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     borderRadius: 20,
     backgroundColor: "rgba(255, 59, 48, 0.1)",
+  },
+  unreadBadge: {
+    position: "absolute",
+    backgroundColor: "#25D366",
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    left: 40,
+    top: 5,
+    paddingHorizontal: 5,
+    zIndex: 1,
+  },
+  unreadBadgeText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  newMessage: {
+    fontWeight: "bold",
+    color: "#333",
   },
 });
 

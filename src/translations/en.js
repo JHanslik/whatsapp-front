@@ -12,6 +12,7 @@ export default {
       success: "Success",
       add: "Add",
       ok: "OK",
+      yesterday: "Yesterday",
     },
     auth: {
       login: "Login",

@@ -17,6 +17,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { createMessage, getConversationMessages } from "../services/api";
 import { useTheme } from "../context/ThemeContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ConversationScreen = ({ route, navigation }) => {
   const { t } = useTranslation();
@@ -37,6 +38,34 @@ const ConversationScreen = ({ route, navigation }) => {
     intervalRef.current = setInterval(() => {
       loadMessages();
     }, 1000);
+
+    // Indiquer qu'on a ouvert cette conversation en stockant une valeur dans AsyncStorage
+    const markConversationAsRead = async () => {
+      try {
+        const openedConversations = await AsyncStorage.getItem(
+          "openedConversations"
+        );
+        let conversationsArray = openedConversations
+          ? JSON.parse(openedConversations)
+          : [];
+
+        // Ajouter cette conversation si elle n'est pas déjà là
+        if (!conversationsArray.includes(conversationId)) {
+          conversationsArray.push(conversationId);
+          await AsyncStorage.setItem(
+            "openedConversations",
+            JSON.stringify(conversationsArray)
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Erreur lors du marquage de la conversation comme lue:",
+          error
+        );
+      }
+    };
+
+    markConversationAsRead();
 
     const keyboardWillShow = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
@@ -131,26 +160,72 @@ const ConversationScreen = ({ route, navigation }) => {
         <View
           style={[
             styles.messageBubble,
-            isOwnMessage 
+            isOwnMessage
               ? [styles.ownBubble, { backgroundColor: theme.accent }]
               : [styles.otherBubble, { backgroundColor: theme.surface }],
           ]}
         >
-          <Text style={[styles.messageText, { color: theme.text }]}>{item.text}</Text>
+          <Text style={[styles.messageText, { color: theme.text }]}>
+            {item.text}
+          </Text>
           <Text style={[styles.messageTime, { color: theme.textSecondary }]}>
-            {new Date(item.createdAt).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            {formatMessageDate(new Date(item.createdAt))}
           </Text>
         </View>
       </View>
     );
   };
 
+  // Fonction pour formater la date du message avec le jour
+  const formatMessageDate = (date) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const messageDate = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    );
+
+    // Format pour l'heure uniquement
+    const timeFormat = {
+      hour: "2-digit",
+      minute: "2-digit",
+    };
+
+    // Aujourd'hui: afficher seulement l'heure
+    if (messageDate.getTime() === today.getTime()) {
+      return date.toLocaleTimeString([], timeFormat);
+    }
+    // Hier: afficher "Hier" et l'heure
+    else if (messageDate.getTime() === yesterday.getTime()) {
+      return `${t("common.yesterday")} ${date.toLocaleTimeString(
+        [],
+        timeFormat
+      )}`;
+    }
+    // Cette semaine: afficher le jour et l'heure
+    else if (now.getTime() - date.getTime() < 7 * 24 * 60 * 60 * 1000) {
+      return `${date.toLocaleDateString([], {
+        weekday: "short",
+      })} ${date.toLocaleTimeString([], timeFormat)}`;
+    }
+    // Plus ancien: afficher la date complète
+    else {
+      return date.toLocaleDateString([], {
+        day: "2-digit",
+        month: "2-digit",
+        year: "2-digit",
+      });
+    }
+  };
+
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+      <View
+        style={[styles.loadingContainer, { backgroundColor: theme.background }]}
+      >
         <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
@@ -190,15 +265,18 @@ const ConversationScreen = ({ route, navigation }) => {
         ]}
       >
         <TextInput
-          style={[styles.input, { color: theme.text, backgroundColor: theme.background }]}
+          style={[
+            styles.input,
+            { color: theme.text, backgroundColor: theme.background },
+          ]}
           value={newMessage}
           onChangeText={setNewMessage}
           placeholder={t("chat.messagePlaceholder")}
           placeholderTextColor={theme.textSecondary}
           multiline
         />
-        <TouchableOpacity 
-          style={[styles.sendButton, { backgroundColor: theme.primary }]} 
+        <TouchableOpacity
+          style={[styles.sendButton, { backgroundColor: theme.primary }]}
           onPress={handleSendMessage}
         >
           <Text style={styles.sendButtonText}>{t("common.send")}</Text>
