@@ -6,7 +6,9 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import "./src/translations/i18n";
 import { useTranslation } from "react-i18next";
 import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
+import { AuthProvider } from "./src/context/AuthContext";
 import { View, Switch } from "react-native";
+import LogoutInfoModal from "./src/components/LogoutInfoModal";
 
 // Importer nos écrans
 import LoginScreen from "./src/screens/LoginScreen";
@@ -98,6 +100,8 @@ const AppContent = () => {
             options={{ title: t("settings.title") }}
           />
         </Stack.Navigator>
+
+        <LogoutInfoModal />
       </NavigationContainer>
     </SafeAreaProvider>
   );
@@ -106,7 +110,9 @@ const AppContent = () => {
 export default function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </ThemeProvider>
   );
 }

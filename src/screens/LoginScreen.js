@@ -10,10 +10,11 @@ import {
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { loginUser } from "../services/api";
-import { setAuthToken } from "../services/authStorage";
+import { useAuth } from "../context/AuthContext";
 
 const LoginScreen = ({ navigation }) => {
   const { t } = useTranslation();
+  const { login } = useAuth();
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,7 +28,7 @@ const LoginScreen = ({ navigation }) => {
     setLoading(true);
     try {
       const userData = await loginUser({ phone, password });
-      await setAuthToken(userData.token);
+      await login(userData.token, userData.user);
       Alert.alert(t("common.success"), t("auth.loginSuccess"));
       navigation.navigate("Home", { userId: userData.user._id });
     } catch (error) {
