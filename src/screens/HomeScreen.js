@@ -8,6 +8,8 @@ import {
   Image,
   Alert,
   FlatList,
+  Animated,
+  Platform,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -24,6 +26,7 @@ const HomeScreen = ({ route, navigation }) => {
   const userId = route.params?.userId;
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [scaleAnim] = useState(new Animated.Value(1));
 
   useEffect(() => {
     loadConversations();
@@ -82,6 +85,22 @@ const HomeScreen = ({ route, navigation }) => {
         },
       },
     ]);
+  };
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
   };
 
   const renderHeader = () => (
@@ -150,7 +169,9 @@ const HomeScreen = ({ route, navigation }) => {
         : t("chat.unknownContact");
 
     return (
-      <View style={styles.conversationItem}>
+      <Animated.View
+        style={[styles.conversationItem, { transform: [{ scale: scaleAnim }] }]}
+      >
         <TouchableOpacity
           style={styles.conversationContent}
           onPress={() =>
@@ -162,6 +183,9 @@ const HomeScreen = ({ route, navigation }) => {
               userId: userId,
             })
           }
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          activeOpacity={0.7}
         >
           <Image
             source={{ uri: "https://via.placeholder.com/50" }}
@@ -181,10 +205,11 @@ const HomeScreen = ({ route, navigation }) => {
         <TouchableOpacity
           style={styles.deleteButton}
           onPress={() => handleDeleteConversation(item._id)}
+          activeOpacity={0.7}
         >
           <MaterialIcons name="delete" size={24} color="#FF3B30" />
         </TouchableOpacity>
-      </View>
+      </Animated.View>
     );
   };
 
@@ -263,36 +288,54 @@ const HomeScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#F5F5F5",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 16,
-    backgroundColor: "#128C7E",
+    backgroundColor: "#075E54",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
     color: "#fff",
+    letterSpacing: 0.5,
   },
   headerButtons: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 15,
+    gap: 20,
   },
   logoutButton: {
-    padding: 5,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   settingsButton: {
-    padding: 5,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   profileButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
     overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "#fff",
   },
   profileImage: {
     width: "100%",
@@ -303,9 +346,22 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     padding: 20,
     backgroundColor: "#fff",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
   actionButton: {
     alignItems: "center",
+    padding: 10,
+    borderRadius: 10,
   },
   actionIcon: {
     width: 60,
@@ -314,6 +370,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   actionIconText: {
     fontSize: 24,
@@ -321,13 +388,15 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 14,
     color: "#333",
+    fontWeight: "500",
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#333",
     marginHorizontal: 20,
-    marginVertical: 10,
+    marginVertical: 15,
+    letterSpacing: 0.5,
   },
   conversationsList: {
     flex: 1,
@@ -336,8 +405,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E8E8E8",
+    backgroundColor: "#fff",
+    marginHorizontal: 10,
+    marginVertical: 5,
+    borderRadius: 10,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   conversationContent: {
     flex: 1,
@@ -349,6 +431,8 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     marginRight: 15,
+    borderWidth: 2,
+    borderColor: "#075E54",
   },
   conversationInfo: {
     flex: 1,
@@ -363,19 +447,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#000",
+    letterSpacing: 0.3,
   },
   messageTime: {
     fontSize: 12,
     color: "#666",
+    fontWeight: "500",
   },
   lastMessage: {
     fontSize: 14,
     color: "#666",
     marginRight: 40,
+    letterSpacing: 0.2,
   },
   deleteButton: {
     padding: 10,
     marginLeft: 10,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 59, 48, 0.1)",
   },
 });
 
