@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { getUserProfile, updateUserProfile } from "../services/api";
+import ProfileImageUploader from "../components/ProfileImageUploader";
 
 const ProfileScreen = ({ route, navigation }) => {
   const { t } = useTranslation();
@@ -28,6 +29,7 @@ const ProfileScreen = ({ route, navigation }) => {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [profileImage, setProfileImage] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [fetchingProfile, setFetchingProfile] = useState(true);
@@ -42,6 +44,7 @@ const ProfileScreen = ({ route, navigation }) => {
         setFirstName(userData.firstName || "");
         setLastName(userData.lastName || "");
         setPhone(userData.phone || "");
+        setProfileImage(userData.profileImage || null);
         setError(null);
       } catch (err) {
         setError(t("profile.loadError"));
@@ -120,6 +123,11 @@ const ProfileScreen = ({ route, navigation }) => {
       contentContainerStyle={styles.contentContainer}
     >
       <Text style={styles.title}>{t("profile.edit")}</Text>
+
+      <ProfileImageUploader
+        currentImage={profileImage}
+        onImageUpdate={setProfileImage}
+      />
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t("profile.personalInfo")}</Text>

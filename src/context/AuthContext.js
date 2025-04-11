@@ -4,6 +4,8 @@ import { setAuthToken, clearAuthToken } from "../services/authStorage";
 
 // Clés pour AsyncStorage
 const LOGOUT_TIME_KEY = "whatsapp_logout_time";
+const USER_KEY = "user";
+const TOKEN_KEY = "token";
 
 // Création du contexte d'authentification
 const AuthContext = createContext();
@@ -14,6 +16,7 @@ export const AuthProvider = ({ children }) => {
   const [lastLogoutTime, setLastLogoutTime] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [logoutDuration, setLogoutDuration] = useState("");
+  const [initialAuthCheckDone, setInitialAuthCheckDone] = useState(false);
 
   // Fonction pour calculer la durée depuis la déconnexion
   const calculateLogoutDuration = (logoutTime) => {
@@ -34,30 +37,58 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Vérifier s'il y a eu une déconnexion précédente au chargement
+  // Vérifier s'il y a eu une déconnexion précédente et si l'utilisateur est déjà connecté
   useEffect(() => {
-    const checkLastLogout = async () => {
+    const initializeAuth = async () => {
       try {
+        // Vérifier si un utilisateur est déjà connecté
+        const userJson = await AsyncStorage.getItem(USER_KEY);
+        const token = await AsyncStorage.getItem(TOKEN_KEY);
+
+        if (userJson && token) {
+          const user = JSON.parse(userJson);
+          console.log("Utilisateur trouvé dans le stockage:", user);
+          await setAuthToken(token);
+          setUserId(user._id);
+          setIsAuthenticated(true);
+        }
+
+        // Vérifier s'il y a eu une déconnexion précédente
         const storedLogoutTime = await AsyncStorage.getItem(LOGOUT_TIME_KEY);
         if (storedLogoutTime) {
           const duration = calculateLogoutDuration(storedLogoutTime);
           setLastLogoutTime(storedLogoutTime);
           setLogoutDuration(duration);
+          // Afficher la modal de déconnexion seulement si l'utilisateur s'est reconnecté
+          if (userJson && token) {
+            setShowLogoutModal(true);
+          }
         }
+
+        setInitialAuthCheckDone(true);
       } catch (error) {
         console.error(
-          "Erreur lors de la récupération du temps de déconnexion:",
+          "Erreur lors de l'initialisation de l'authentification:",
           error
         );
+        setInitialAuthCheckDone(true);
       }
     };
 
-    checkLastLogout();
+    initializeAuth();
   }, []);
 
   // Fonction de connexion
   const login = async (token, user) => {
     try {
+      // Stocker le token dans AsyncStorage
+      await AsyncStorage.setItem(TOKEN_KEY, token);
+
+      // Stocker l'objet utilisateur dans AsyncStorage
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
+      console.log("Utilisateur stocké dans AsyncStorage:", user);
+
+      // Mettre à jour le token d'authentification
       await setAuthToken(token);
       setUserId(user._id);
       setIsAuthenticated(true);
@@ -82,6 +113,10 @@ export const AuthProvider = ({ children }) => {
       const now = new Date().toISOString();
       await AsyncStorage.setItem(LOGOUT_TIME_KEY, now);
 
+      // Effacer le token et les données utilisateur
+      await AsyncStorage.removeItem(TOKEN_KEY);
+      await AsyncStorage.removeItem(USER_KEY);
+
       // Effacer le token
       await clearAuthToken();
       setIsAuthenticated(false);
@@ -95,6 +130,10 @@ export const AuthProvider = ({ children }) => {
   const closeLogoutModal = () => {
     setShowLogoutModal(false);
   };
+
+  if (!initialAuthCheckDone) {
+    return null; // Ou un composant de chargement
+  }
 
   return (
     <AuthContext.Provider
