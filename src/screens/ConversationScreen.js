@@ -232,7 +232,11 @@ const ConversationScreen = ({ route, navigation }) => {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: theme.background }]}
+      behavior={Platform.OS === "ios" ? "padding" : null}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+    >
       <FlatList
         ref={flatListRef}
         data={messages}
@@ -243,7 +247,7 @@ const ConversationScreen = ({ route, navigation }) => {
         inverted={false}
         contentContainerStyle={[
           styles.messagesContainer,
-          { paddingBottom: isKeyboardVisible ? keyboardHeight + 60 : 100 },
+          { paddingBottom: isKeyboardVisible ? keyboardHeight + 70 : 120 },
         ]}
       />
 
@@ -253,10 +257,10 @@ const ConversationScreen = ({ route, navigation }) => {
           {
             position: "absolute",
             bottom: isKeyboardVisible
-              ? keyboardHeight + (Platform.OS === "android" ? 30 : 0)
+              ? keyboardHeight + (Platform.OS === "android" ? 15 : 15)
               : Platform.OS === "android"
-              ? 30
-              : 0,
+              ? 15
+              : 15,
             left: 0,
             right: 0,
             backgroundColor: theme.surface,
@@ -282,7 +286,7 @@ const ConversationScreen = ({ route, navigation }) => {
           <Text style={styles.sendButtonText}>{t("common.send")}</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -345,7 +349,7 @@ const styles = StyleSheet.create({
     padding: 10,
     alignItems: "center",
     borderTopWidth: 1,
-    paddingBottom: Platform.OS === "android" ? 10 : 10,
+    paddingBottom: Platform.OS === "android" ? 8 : 8,
     elevation: 3,
     shadowColor: "#000",
     shadowOffset: {
