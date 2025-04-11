@@ -6,16 +6,42 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
+  Alert,
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
 
-const SettingsScreen = () => {
+const SettingsScreen = ({ navigation }) => {
   const { t, i18n } = useTranslation();
   const { currentTheme, theme, setTheme, toggleTheme } = useTheme();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    Alert.alert(
+      t("auth.logoutConfirmTitle"),
+      t("auth.logoutConfirm"),
+      [
+        {
+          text: t("common.cancel"),
+          style: "cancel",
+        },
+        {
+          text: t("common.ok"),
+          onPress: async () => {
+            await logout();
+            navigation.navigate("Login");
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
       <View style={[styles.section, { backgroundColor: theme.surface }]}>
         <Text style={[styles.sectionTitle, { color: theme.primary }]}>
           {t("settings.title")}
@@ -67,7 +93,14 @@ const SettingsScreen = () => {
             </View>
           </View>
 
-          
+          <View style={styles.settingItem}>
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogout}
+            >
+              <Text style={styles.logoutButtonText}>{t("auth.logout")}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </ScrollView>
@@ -144,6 +177,18 @@ const styles = StyleSheet.create({
   },
   selectedThemeText: {
     color: "#FFFFFF",
+  },
+  logoutButton: {
+    backgroundColor: "#FF3B30",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  logoutButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });
 

@@ -30,10 +30,14 @@ export default {
       registerFailed: "Account creation failed",
       logout: "Logout",
       logoutConfirm: "Are you sure you want to logout?",
+      logoutConfirmTitle: "Confirm Logout",
       logoutError: "Unable to logout",
       invalidPhoneFormat:
         "Phone number must be in format +33XXXXXXXXX or 0XXXXXXXXX",
       passwordLength: "Password must be at least 6 characters long",
+      welcomeBack: "Welcome Back!",
+      lastLogout: "Last logout",
+      disconnectedFor: "Disconnected for",
     },
     chat: {
       newMessage: "New message",

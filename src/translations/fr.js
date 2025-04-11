@@ -30,10 +30,14 @@ export default {
       registerFailed: "Échec de la création du compte",
       logout: "Déconnexion",
       logoutConfirm: "Êtes-vous sûr de vouloir vous déconnecter ?",
+      logoutConfirmTitle: "Confirmer la déconnexion",
       logoutError: "Impossible de se déconnecter",
       invalidPhoneFormat:
         "Le numéro de téléphone doit être au format +33XXXXXXXXX ou 0XXXXXXXXX",
       passwordLength: "Le mot de passe doit contenir au moins 6 caractères",
+      welcomeBack: "Bon retour !",
+      lastLogout: "Dernière déconnexion",
+      disconnectedFor: "Déconnecté depuis",
     },
     chat: {
       newMessage: "Nouveau message",
