@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import * as ScreenOrientation from "expo-screen-orientation";
+import { Accelerometer } from "expo-sensors";
 import "./src/translations/i18n";
 import { useTranslation } from "react-i18next";
 import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
@@ -24,6 +26,41 @@ const Stack = createStackNavigator();
 const AppContent = () => {
   const { t, i18n } = useTranslation();
   const { theme, currentTheme, toggleTheme } = useTheme();
+  const [orientation, setOrientation] = useState("PORTRAIT");
+
+  useEffect(() => {
+    // Déverrouiller l'orientation au démarrage
+    ScreenOrientation.unlockAsync();
+
+    // Configuration de l'accéléromètre
+    Accelerometer.setUpdateInterval(500); // Augmenter la fréquence de mise à jour
+
+    const subscription = Accelerometer.addListener((accelerometerData) => {
+      const { x, y } = accelerometerData;
+      // Ajuster les seuils de détection
+      if (Math.abs(x) > 0.5 || Math.abs(y) > 0.5) {
+        if (orientation !== "LANDSCAPE") {
+          ScreenOrientation.lockAsync(
+            ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT
+          );
+          setOrientation("LANDSCAPE");
+        }
+      } else {
+        if (orientation !== "PORTRAIT") {
+          ScreenOrientation.lockAsync(
+            ScreenOrientation.OrientationLock.PORTRAIT_UP
+          );
+          setOrientation("PORTRAIT");
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+      // Restaurer l'orientation par défaut lors du démontage
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.DEFAULT);
+    };
+  }, [orientation]);
 
   return (
     <SafeAreaProvider>
