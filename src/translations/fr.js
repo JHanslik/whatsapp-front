@@ -13,6 +13,9 @@ export default {
       add: "Ajouter",
       ok: "OK",
       yesterday: "Hier",
+      yes: "Oui",
+      no: "Non",
+      info: "Information",
     },
     auth: {
       login: "Connexion",
@@ -53,6 +56,7 @@ export default {
       deleteTitle: "Supprimer la conversation",
       deleteConfirm: "Êtes-vous sûr de vouloir supprimer cette conversation ?",
       deleteError: "Impossible de supprimer la conversation",
+      deleteSuccess: "Conversation supprimée avec succès",
       deleteMessageTitle: "Supprimer le message",
       deleteMessageConfirm: "Êtes-vous sûr de vouloir supprimer ce message ?",
       deleteMessageError: "Impossible de supprimer le message",
@@ -75,6 +79,16 @@ export default {
       recentConversations: "Conversations récentes",
       unknownContact: "Contact inconnu",
       contact: "Contact",
+      newContactRequest: "Nouveau contact",
+      contactRequestMessage:
+        "Cette personne vous a envoyé un message. Souhaitez-vous l'ajouter à vos contacts ?",
+      removeContactTitle: "Supprimer le contact",
+      removeContactMessage:
+        "Souhaitez-vous également supprimer {name} de vos contacts ?",
+      contactRemoved: "Contact supprimé avec succès",
+      contactRemoveError: "Erreur lors de la suppression du contact",
+      refreshContacts: "Actualiser",
+      checkingConversations: "Vérification des conversations en cours...",
     },
     settings: {
       title: "Paramètres",

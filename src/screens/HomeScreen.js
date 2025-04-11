@@ -10,6 +10,7 @@ import {
   FlatList,
   Animated,
   Platform,
+  Modal,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -20,6 +21,9 @@ import {
   getConversationMessages,
   deleteConversation,
   getUserProfile,
+  getUserContacts,
+  addContact,
+  deleteContact,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -32,18 +36,36 @@ const HomeScreen = ({ route, navigation }) => {
   const [scaleAnim] = useState(new Animated.Value(1));
   const [userProfile, setUserProfile] = useState(null);
   const [unreadMessages, setUnreadMessages] = useState({});
+  const [userContacts, setUserContacts] = useState([]);
+  const [newContactModal, setNewContactModal] = useState(false);
+  const [pendingContact, setPendingContact] = useState(null);
   const intervalRef = useRef(null);
   const previousConversationsRef = useRef([]);
+  const checkedConversationsRef = useRef(new Set());
+  const previousUserContactsCountRef = useRef(0);
+  const isFirstLoadRef = useRef(true);
 
   useEffect(() => {
+    // Forcer la réinitialisation lors du premier rendu
+    checkedConversationsRef.current.clear();
+
     loadConversations();
     loadUserProfile();
+    loadContacts();
 
     // Configuration d'un intervalle pour rafraîchir les conversations automatiquement
     intervalRef.current = setInterval(() => {
       loadConversations();
       checkOpenedConversations();
-    }, 1000); // Rafraîchissement toutes les secondes (au lieu de 5 secondes)
+
+      // Périodiquement, réinitialiser les conversations vérifiées (toutes les minutes)
+      const now = new Date();
+      if (now.getSeconds() < 5) {
+        // Dans les 5 premières secondes de chaque minute
+        console.log("Réinitialisation périodique des conversations vérifiées");
+        checkedConversationsRef.current.clear();
+      }
+    }, 3000); // Augmentation à 3 secondes pour réduire la pression sur l'API
 
     return () => {
       if (intervalRef.current) {
@@ -51,6 +73,151 @@ const HomeScreen = ({ route, navigation }) => {
       }
     };
   }, []);
+
+  // États de la modale
+  useEffect(() => {
+    console.log("État de la modale:", newContactModal ? "visible" : "cachée");
+    if (pendingContact) {
+      console.log(
+        "Contact en attente:",
+        pendingContact.firstName,
+        pendingContact.lastName
+      );
+    }
+  }, [newContactModal, pendingContact]);
+
+  // Fonction pour tester la modale manuellement (à enlever en production)
+  const testModal = () => {
+    console.log("Test de la modale");
+    if (conversations.length > 0) {
+      const conv = conversations[0];
+      if (conv && conv.participants && conv.participants.length > 0) {
+        const other = conv.participants.find(
+          (p) => String(p._id) !== String(userId)
+        );
+        if (other) {
+          console.log(
+            "Test de la modale avec:",
+            other.firstName,
+            other.lastName
+          );
+          setPendingContact(other);
+          setNewContactModal(true);
+        } else {
+          console.log("Aucun participant trouvé dans la conversation de test");
+        }
+      } else {
+        console.log("Conversation de test invalide");
+      }
+    } else {
+      console.log("Aucune conversation disponible pour le test");
+      // Créer un utilisateur fictif pour tester
+      const fakeUser = {
+        _id: "test123",
+        firstName: "Test",
+        lastName: "Utilisateur",
+        phone: "+33612345678",
+        profileImage: "https://via.placeholder.com/80",
+      };
+      setPendingContact(fakeUser);
+      setNewContactModal(true);
+    }
+  };
+
+  // Charger les contacts de l'utilisateur
+  const loadContacts = async () => {
+    try {
+      const contacts = await getUserContacts(userId);
+      console.log("Contacts chargés:", contacts.length);
+      setUserContacts(contacts);
+    } catch (error) {
+      console.error("Erreur lors du chargement des contacts:", error);
+    }
+  };
+
+  // Vérifier si un utilisateur est déjà dans nos contacts
+  const isContactInList = (participantId) => {
+    console.log(
+      "Vérification du contact:",
+      participantId,
+      "dans",
+      userContacts.length,
+      "contacts"
+    );
+
+    if (!userContacts || userContacts.length === 0) {
+      console.log("Liste de contacts vide");
+      return false;
+    }
+
+    // Pour déboguer, affichons les IDs de tous les contacts
+    console.log(
+      "IDs des contacts:",
+      userContacts.map((c) => {
+        const contactId = c.contactId && (c.contactId._id || c.contactId);
+        return String(contactId);
+      })
+    );
+
+    // S'assurer que participantId est bien défini
+    if (!participantId) {
+      console.log("ID de participant invalide:", participantId);
+      return false;
+    }
+
+    // Convertir l'ID du participant en chaîne pour comparaison fiable
+    const participantIdStr = String(participantId);
+
+    const isInList = userContacts.some((contact) => {
+      if (!contact || !contact.contactId) {
+        console.log("Structure de contact invalide:", contact);
+        return false;
+      }
+
+      // contactId peut être un objet avec _id ou directement l'id
+      const contactIdStr = String(
+        contact.contactId._id || contact.contactId
+      ).trim();
+      const match = contactIdStr === participantIdStr;
+
+      if (match) {
+        console.log("Contact trouvé:", contactIdStr);
+      }
+
+      return match;
+    });
+
+    console.log("Résultat de la vérification:", isInList);
+    return isInList;
+  };
+
+  // Fonction pour ajouter un contact
+  const handleAddContact = async () => {
+    if (!pendingContact) return;
+
+    try {
+      await addContact(userId, pendingContact._id);
+      Alert.alert(t("common.success"), t("chat.contactAdded"));
+      await loadContacts(); // Recharger la liste des contacts
+      setNewContactModal(false);
+      setPendingContact(null);
+    } catch (error) {
+      Alert.alert(
+        t("common.error"),
+        error.message || t("chat.addContactError")
+      );
+    }
+  };
+
+  // Fonction appelée après la suppression d'un contact
+  const afterContactRemoval = () => {
+    // Vider la liste des conversations vérifiées pour permettre une nouvelle détection
+    console.log("Réinitialisation après suppression de contact");
+    checkedConversationsRef.current.clear();
+    // Recharger les contacts et les conversations
+    loadContacts();
+    loadConversations();
+  };
 
   // Vérifier si des conversations ont été ouvertes et réinitialiser leurs compteurs
   const checkOpenedConversations = async () => {
@@ -87,6 +254,29 @@ const HomeScreen = ({ route, navigation }) => {
   const loadConversations = async () => {
     try {
       const fetchedConversations = await getUserConversations(userId);
+      console.log("Conversations chargées:", fetchedConversations.length);
+
+      // Vérifier si de nouvelles conversations sont apparues
+      const hasNewConversations =
+        fetchedConversations.length > conversations.length;
+      if (hasNewConversations) {
+        console.log(
+          "Nouvelles conversations détectées! Réinitialisation des vérifications."
+        );
+        checkedConversationsRef.current.clear();
+      }
+
+      // Pour identifier de nouvelles conversations spécifiques
+      const existingConversationIds = conversations.map((c) => c._id);
+      const newConversations = fetchedConversations.filter(
+        (conv) => !existingConversationIds.includes(conv._id)
+      );
+
+      if (newConversations.length > 0) {
+        console.log(
+          `${newConversations.length} nouvelles conversations identifiées`
+        );
+      }
 
       // Pour chaque conversation, récupérer le dernier message
       const conversationsWithLastMessage = await Promise.all(
@@ -148,12 +338,234 @@ const HomeScreen = ({ route, navigation }) => {
       }));
 
       setConversations(sortedConversations);
+
+      // Si de nouvelles conversations ont été détectées, vérifier tout de suite s'il y a des étrangers
+      if (hasNewConversations && userContacts && userContacts.length > 0) {
+        console.log(
+          "Vérification immédiate des étrangers suite à de nouvelles conversations"
+        );
+        setTimeout(() => {
+          checkNewConversationsWithStrangers(sortedConversations);
+        }, 100);
+      }
     } catch (error) {
       Alert.alert(t("common.error"), t("chat.loadError"));
     } finally {
       setLoading(false);
     }
   };
+
+  // Vérifier s'il y a de nouvelles conversations avec des personnes qui ne sont pas dans les contacts
+  const checkNewConversationsWithStrangers = (convs) => {
+    console.log("Vérification des nouvelles conversations...");
+    console.log("Nombre de conversations:", convs.length);
+    console.log("Nombre de contacts:", userContacts.length);
+
+    // Si aucun contact n'est chargé, ne pas continuer
+    if (!userContacts || !convs || !convs.length) {
+      console.log(
+        "Aucun contact ou conversation chargé, abandon de la vérification"
+      );
+      return;
+    }
+
+    // Pour débogage seulement: permettre de forcer la vérification en décommentant
+    // checkedConversationsRef.current.clear();
+
+    console.log("Conversations déjà vérifiées:", [
+      ...checkedConversationsRef.current,
+    ]);
+
+    // 1. Créer un dictionnaire des IDs de contacts
+    const contactIds = new Set();
+    userContacts.forEach((contact) => {
+      const contactId =
+        contact.contactId && (contact.contactId._id || contact.contactId);
+      if (contactId) {
+        contactIds.add(String(contactId));
+      }
+    });
+
+    console.log("Nombre d'IDs de contacts:", contactIds.size);
+
+    // 2. Trouver toutes les conversations avec des non-contacts
+    const strangerConvs = convs.filter((conv) => {
+      // S'assurer que la conversation est valide
+      if (!conv || !conv._id || !conv.participants) {
+        console.log("Structure de conversation invalide:", conv);
+        return false;
+      }
+
+      // Vérifier que la conversation a été traitée
+      if (checkedConversationsRef.current.has(conv._id)) {
+        console.log("Conversation déjà vérifiée:", conv._id);
+        return false;
+      }
+
+      // Marquer comme vérifiée pour éviter de la ré-examiner
+      checkedConversationsRef.current.add(conv._id);
+
+      // Trouver l'autre participant (qui n'est pas l'utilisateur actuel)
+      const otherParticipant = conv.participants.find(
+        (p) => String(p._id) !== String(userId)
+      );
+
+      if (!otherParticipant) {
+        console.log("Participant non trouvé dans la conversation", conv._id);
+        return false;
+      }
+
+      console.log(
+        "Autre participant trouvé:",
+        otherParticipant.firstName,
+        otherParticipant.lastName,
+        "ID:",
+        otherParticipant._id
+      );
+
+      // Vérification plus rapide avec le Set d'IDs de contacts
+      const participantIdStr = String(otherParticipant._id);
+      const isInContacts = contactIds.has(participantIdStr);
+
+      console.log("Est dans les contacts?", isInContacts);
+
+      return !isInContacts;
+    });
+
+    console.log("Conversations avec étrangers trouvées:", strangerConvs.length);
+
+    if (strangerConvs.length > 0) {
+      console.log(
+        "Détails des conversations avec étrangers:",
+        strangerConvs.map((conv) => {
+          const other = conv.participants.find(
+            (p) => String(p._id) !== String(userId)
+          );
+          return {
+            convId: conv._id,
+            contact: other ? `${other.firstName} ${other.lastName}` : "Inconnu",
+          };
+        })
+      );
+    }
+
+    // S'il y a des conversations avec des étrangers, afficher la modale
+    if (strangerConvs.length > 0) {
+      // Prendre la plus récente
+      const firstStrangerConv = strangerConvs[0];
+      const stranger = firstStrangerConv.participants.find(
+        (p) => String(p._id) !== String(userId)
+      );
+
+      if (stranger) {
+        console.log(
+          "Affichage de la modale pour:",
+          stranger.firstName,
+          stranger.lastName
+        );
+
+        // Si la modale n'est pas déjà ouverte
+        if (!newContactModal) {
+          setPendingContact(stranger);
+          // Utiliser setTimeout pour éviter les conflits d'état React
+          setTimeout(() => {
+            console.log("Définition du state newContactModal à true");
+            setNewContactModal(true);
+          }, 100);
+        }
+      }
+    }
+  };
+
+  // Surveillance spécifique du changement de contacts
+  useEffect(() => {
+    // Si la liste des contacts change (ajout ou suppression)
+    console.log("Liste de contacts mise à jour:", userContacts?.length || 0);
+
+    // Si on vient de supprimer un contact (la liste a diminué)
+    if (previousUserContactsCountRef.current > (userContacts?.length || 0)) {
+      console.log("Détection d'une suppression de contact");
+      // Réinitialiser pour permettre de vérifier à nouveau toutes les conversations
+      checkedConversationsRef.current.clear();
+      // Forcer une nouvelle vérification
+      if (conversations.length > 0) {
+        setTimeout(() => {
+          checkNewConversationsWithStrangers(conversations);
+        }, 500);
+      }
+    }
+
+    // Mettre à jour notre référence
+    previousUserContactsCountRef.current = userContacts?.length || 0;
+  }, [userContacts]);
+
+  // Forcer la vérification quand les conversations ou contacts changent
+  useEffect(() => {
+    const checkConversations = async () => {
+      if (userContacts && conversations.length > 0 && !loading) {
+        console.log("Vérification forcée des nouvelles conversations");
+
+        // Réinitialiser complètement les conversations vérifiées lors de la première charge
+        // ou d'un changement important du nombre de conversations ou contacts
+        if (
+          checkedConversationsRef.current.size === 0 ||
+          conversations.length > previousConversationsRef.current.length ||
+          (userContacts.length > 0 &&
+            previousUserContactsCountRef.current === 0)
+        ) {
+          console.log(
+            "Réinitialisation des conversations vérifiées - changement détecté"
+          );
+          checkedConversationsRef.current.clear();
+        }
+
+        checkNewConversationsWithStrangers(conversations);
+      }
+    };
+
+    checkConversations();
+
+    // Référence pour suivre les changements
+    previousUserContactsCountRef.current = userContacts
+      ? userContacts.length
+      : 0;
+  }, [userContacts, conversations, loading]);
+
+  // Vérification régulière avec un timer distinct pour éviter les conflits
+  useEffect(() => {
+    const checkTimer = setInterval(() => {
+      if (
+        userContacts &&
+        userContacts.length > 0 &&
+        conversations.length > 0 &&
+        !newContactModal &&
+        !loading
+      ) {
+        // Force une vérification complète toutes les 60 secondes
+        const now = new Date();
+        if (now.getSeconds() < 5) {
+          console.log("Réinitialisation planifiée des conversations vérifiées");
+          checkedConversationsRef.current.clear();
+        }
+
+        checkNewConversationsWithStrangers(conversations);
+      }
+    }, 5000); // Vérifier toutes les 5 secondes
+
+    return () => clearInterval(checkTimer);
+  }, [userContacts, conversations, newContactModal, loading]);
+
+  // Ajouter un effet spécifique pour la modale
+  useEffect(() => {
+    // Lorsque pendingContact change et qu'il y a un contact en attente,
+    // s'assurer que la modale est ouverte
+    if (pendingContact && !newContactModal) {
+      console.log(
+        "Contact en attente détecté mais modale fermée, ouverture forcée"
+      );
+      setNewContactModal(true);
+    }
+  }, [pendingContact, newContactModal]);
 
   const loadUserProfile = async () => {
     try {
@@ -176,8 +588,12 @@ const HomeScreen = ({ route, navigation }) => {
         onPress: async () => {
           try {
             await deleteConversation(conversationId);
+            // Réinitialiser les conversations vérifiées après suppression
+            checkedConversationsRef.current.clear();
             // Recharger la liste des conversations
             loadConversations();
+            // Notification simple de succès
+            Alert.alert(t("common.success"), t("chat.deleteSuccess"));
           } catch (error) {
             Alert.alert(t("common.error"), t("chat.deleteError"));
           }
@@ -229,20 +645,6 @@ const HomeScreen = ({ route, navigation }) => {
           </View>
           <Text style={styles.actionText}>{t("chat.newMessage")}</Text>
         </TouchableOpacity>
-
-        {/* <TouchableOpacity style={styles.actionButton}>
-          <View style={[styles.actionIcon, { backgroundColor: "#128C7E" }]}>
-            <Text style={styles.actionIconText}>👥</Text>
-          </View>
-          <Text style={styles.actionText}>Groupes</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionButton}>
-          <View style={[styles.actionIcon, { backgroundColor: "#34B7F1" }]}>
-            <Text style={styles.actionIconText}>📞</Text>
-          </View>
-          <Text style={styles.actionText}>Appels</Text>
-        </TouchableOpacity> */}
       </View>
 
       <Text style={styles.sectionTitle}>{t("chat.recentConversations")}</Text>
@@ -420,6 +822,10 @@ const HomeScreen = ({ route, navigation }) => {
         style: "destructive",
         onPress: async () => {
           try {
+            // Réinitialiser les conversations vérifiées avant la déconnexion
+            checkedConversationsRef.current.clear();
+
+            // Déconnexion
             await logout();
             navigation.reset({
               index: 0,
@@ -481,6 +887,65 @@ const HomeScreen = ({ route, navigation }) => {
         onRefresh={loadConversations}
         refreshing={loading}
       />
+
+      {/* Modale pour ajouter un nouveau contact */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={newContactModal}
+        onRequestClose={() => {
+          setNewContactModal(false);
+          setPendingContact(null);
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t("chat.newContactRequest")}</Text>
+
+            {pendingContact && (
+              <View style={styles.pendingContactInfo}>
+                <Image
+                  source={{
+                    uri:
+                      pendingContact.profileImage ||
+                      "https://via.placeholder.com/80",
+                  }}
+                  style={styles.pendingContactImage}
+                />
+                <Text style={styles.pendingContactName}>
+                  {pendingContact.firstName} {pendingContact.lastName}
+                </Text>
+                <Text style={styles.pendingContactPhone}>
+                  {pendingContact.phone}
+                </Text>
+              </View>
+            )}
+
+            <Text style={styles.modalMessage}>
+              {t("chat.contactRequestMessage")}
+            </Text>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.declineButton]}
+                onPress={() => {
+                  setNewContactModal(false);
+                  setPendingContact(null);
+                }}
+              >
+                <Text style={styles.declineButtonText}>{t("common.no")}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.acceptButton]}
+                onPress={handleAddContact}
+              >
+                <Text style={styles.acceptButtonText}>{t("common.yes")}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -687,6 +1152,90 @@ const styles = StyleSheet.create({
   newMessage: {
     fontWeight: "bold",
     color: "#333",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: "85%",
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    padding: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#075E54",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  pendingContactInfo: {
+    alignItems: "center",
+    marginVertical: 15,
+  },
+  pendingContactImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 10,
+    borderWidth: 3,
+    borderColor: "#075E54",
+  },
+  pendingContactName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#000",
+    marginBottom: 5,
+  },
+  pendingContactPhone: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 10,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: "#333",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  modalButton: {
+    borderRadius: 8,
+    padding: 12,
+    minWidth: "45%",
+    alignItems: "center",
+  },
+  declineButton: {
+    backgroundColor: "#f2f2f2",
+  },
+  acceptButton: {
+    backgroundColor: "#25D366",
+  },
+  declineButtonText: {
+    color: "#333",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  acceptButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });
 

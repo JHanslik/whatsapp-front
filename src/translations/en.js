@@ -13,6 +13,9 @@ export default {
       add: "Add",
       ok: "OK",
       yesterday: "Yesterday",
+      yes: "Yes",
+      no: "No",
+      info: "Information",
     },
     auth: {
       login: "Login",
@@ -53,6 +56,7 @@ export default {
       deleteTitle: "Delete conversation",
       deleteConfirm: "Are you sure you want to delete this conversation?",
       deleteError: "Unable to delete conversation",
+      deleteSuccess: "Conversation deleted successfully",
       deleteMessageTitle: "Delete message",
       deleteMessageConfirm: "Are you sure you want to delete this message?",
       deleteMessageError: "Unable to delete message",
@@ -75,6 +79,16 @@ export default {
       recentConversations: "Recent conversations",
       unknownContact: "Unknown contact",
       contact: "Contact",
+      newContactRequest: "New Contact",
+      contactRequestMessage:
+        "This person sent you a message. Would you like to add them to your contacts?",
+      removeContactTitle: "Remove contact",
+      removeContactMessage:
+        "Would you also like to remove {name} from your contacts?",
+      contactRemoved: "Contact removed successfully",
+      contactRemoveError: "Error removing contact",
+      refreshContacts: "Refresh",
+      checkingConversations: "Checking conversations...",
     },
     settings: {
       title: "Settings",
