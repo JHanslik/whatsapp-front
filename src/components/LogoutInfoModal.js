@@ -1,12 +1,12 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Modal, View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 
 const LogoutInfoModal = () => {
   const { t } = useTranslation();
-  const { showLogoutModal, closeLogoutModal, lastLogoutTime, logoutDuration } =
-    useAuth();
+  const { showLogoutModal, closeLogoutModal, lastLogoutTime } = useAuth();
+  const [currentDuration, setCurrentDuration] = useState("");
 
   // Formater la date et l'heure de déconnexion
   const formatLogoutTime = (isoString) => {
@@ -21,6 +21,44 @@ const LogoutInfoModal = () => {
 
     return `${day}/${month}/${year} à ${hours}:${minutes}`;
   };
+
+  // Calculer la durée depuis la déconnexion
+  const calculateLogoutDuration = () => {
+    if (!lastLogoutTime) return "";
+
+    const now = new Date();
+    const lastLogout = new Date(lastLogoutTime);
+    const diffInMs = now - lastLogout;
+
+    // Calculer les heures, minutes et secondes
+    const hours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffInMs % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diffInMs % (1000 * 60)) / 1000);
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}min ${seconds}s`;
+    } else if (minutes > 0) {
+      return `${minutes}min ${seconds}s`;
+    } else {
+      return `${seconds}s`;
+    }
+  };
+
+  // Mettre à jour la durée toutes les secondes
+  useEffect(() => {
+    if (!showLogoutModal) return;
+
+    // Calculer la durée initiale
+    setCurrentDuration(calculateLogoutDuration());
+
+    // Créer un intervalle pour mettre à jour la durée
+    const interval = setInterval(() => {
+      setCurrentDuration(calculateLogoutDuration());
+    }, 1000);
+
+    // Nettoyer l'intervalle lors du démontage
+    return () => clearInterval(interval);
+  }, [showLogoutModal, lastLogoutTime]);
 
   const formattedLogoutTime = formatLogoutTime(lastLogoutTime);
 
@@ -40,7 +78,7 @@ const LogoutInfoModal = () => {
           </Text>
 
           <Text style={styles.logoutInfo}>
-            {t("auth.disconnectedFor")} : {logoutDuration}
+            {t("auth.disconnectedFor")} : {currentDuration}
           </Text>
 
           <TouchableOpacity style={styles.button} onPress={closeLogoutModal}>

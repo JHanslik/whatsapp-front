@@ -15,27 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [userId, setUserId] = useState(null);
   const [lastLogoutTime, setLastLogoutTime] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [logoutDuration, setLogoutDuration] = useState("");
   const [initialAuthCheckDone, setInitialAuthCheckDone] = useState(false);
-
-  // Fonction pour calculer la durée depuis la déconnexion
-  const calculateLogoutDuration = (logoutTime) => {
-    if (!logoutTime) return "";
-
-    const now = new Date();
-    const lastLogout = new Date(logoutTime);
-    const diffInMs = now - lastLogout;
-
-    // Calculer les heures, minutes et secondes
-    const hours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const minutes = Math.floor((diffInMs % (1000 * 60 * 60)) / (1000 * 60));
-
-    if (hours > 0) {
-      return `${hours}h ${minutes}min`;
-    } else {
-      return `${minutes}min`;
-    }
-  };
 
   // Vérifier s'il y a eu une déconnexion précédente et si l'utilisateur est déjà connecté
   useEffect(() => {
@@ -56,9 +36,7 @@ export const AuthProvider = ({ children }) => {
         // Vérifier s'il y a eu une déconnexion précédente
         const storedLogoutTime = await AsyncStorage.getItem(LOGOUT_TIME_KEY);
         if (storedLogoutTime) {
-          const duration = calculateLogoutDuration(storedLogoutTime);
           setLastLogoutTime(storedLogoutTime);
-          setLogoutDuration(duration);
           // Afficher la modal de déconnexion seulement si l'utilisateur s'est reconnecté
           if (userJson && token) {
             setShowLogoutModal(true);
@@ -96,9 +74,7 @@ export const AuthProvider = ({ children }) => {
       // Vérifier s'il y a eu une déconnexion précédente
       const storedLogoutTime = await AsyncStorage.getItem(LOGOUT_TIME_KEY);
       if (storedLogoutTime) {
-        const duration = calculateLogoutDuration(storedLogoutTime);
         setLastLogoutTime(storedLogoutTime);
-        setLogoutDuration(duration);
         setShowLogoutModal(true);
       }
     } catch (error) {
@@ -143,7 +119,6 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         lastLogoutTime,
-        logoutDuration,
         showLogoutModal,
         closeLogoutModal,
       }}

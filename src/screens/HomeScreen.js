@@ -16,15 +16,16 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-  logoutUser,
   getUserConversations,
   getConversationMessages,
   deleteConversation,
   getUserProfile,
 } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 const HomeScreen = ({ route, navigation }) => {
   const { t } = useTranslation();
+  const { logout } = useAuth();
   const userId = route.params?.userId;
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -409,17 +410,17 @@ const HomeScreen = ({ route, navigation }) => {
   };
 
   const handleLogout = async () => {
-    Alert.alert(t("auth.logout"), t("auth.logoutConfirm"), [
+    Alert.alert(t("auth.logoutConfirmTitle"), t("auth.logoutConfirm"), [
       {
         text: t("common.cancel"),
         style: "cancel",
       },
       {
-        text: t("auth.logout"),
+        text: t("common.ok"),
         style: "destructive",
         onPress: async () => {
           try {
-            await logoutUser();
+            await logout();
             navigation.reset({
               index: 0,
               routes: [{ name: "Login" }],
