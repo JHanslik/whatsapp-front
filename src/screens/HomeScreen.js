@@ -19,6 +19,7 @@ import {
   getUserConversations,
   getConversationMessages,
   deleteConversation,
+  getUserProfile,
 } from "../services/api";
 
 const HomeScreen = ({ route, navigation }) => {
@@ -27,9 +28,11 @@ const HomeScreen = ({ route, navigation }) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [scaleAnim] = useState(new Animated.Value(1));
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
     loadConversations();
+    loadUserProfile();
   }, []);
 
   const loadConversations = async () => {
@@ -62,6 +65,15 @@ const HomeScreen = ({ route, navigation }) => {
       Alert.alert(t("common.error"), t("chat.loadError"));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadUserProfile = async () => {
+    try {
+      const profile = await getUserProfile(userId);
+      setUserProfile(profile);
+    } catch (error) {
+      console.error("Erreur lors du chargement du profil:", error);
     }
   };
 
@@ -168,6 +180,11 @@ const HomeScreen = ({ route, navigation }) => {
         ? `${otherParticipant.firstName} ${otherParticipant.lastName}`
         : t("chat.unknownContact");
 
+    // Utiliser l'image de profil de l'utilisateur ou une image par défaut
+    const profileImageUri = otherParticipant.profileImage
+      ? otherParticipant.profileImage
+      : "https://via.placeholder.com/50";
+
     return (
       <Animated.View
         style={[styles.conversationItem, { transform: [{ scale: scaleAnim }] }]}
@@ -188,7 +205,7 @@ const HomeScreen = ({ route, navigation }) => {
           activeOpacity={0.7}
         >
           <Image
-            source={{ uri: "https://via.placeholder.com/50" }}
+            source={{ uri: profileImageUri }}
             style={styles.contactImage}
           />
           <View style={styles.conversationInfo}>
@@ -264,7 +281,11 @@ const HomeScreen = ({ route, navigation }) => {
             onPress={() => navigation.navigate("Profile", { userId })}
           >
             <Image
-              source={{ uri: "https://via.placeholder.com/40" }}
+              source={{
+                uri: userProfile?.profileImage
+                  ? userProfile.profileImage
+                  : "https://via.placeholder.com/40",
+              }}
               style={styles.profileImage}
             />
           </TouchableOpacity>

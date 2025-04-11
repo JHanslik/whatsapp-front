@@ -12,6 +12,7 @@ import {
   Platform,
   FlatList,
   Modal,
+  Image,
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import {
@@ -144,6 +145,14 @@ const AddContactScreen = ({ navigation, route }) => {
 
   const renderContactItem = ({ item }) => (
     <View style={styles.contactItem}>
+      <Image
+        source={{
+          uri: item.contactId.profileImage
+            ? item.contactId.profileImage
+            : "https://via.placeholder.com/50",
+        }}
+        style={styles.contactImage}
+      />
       <View style={styles.contactInfo}>
         {item.alias && <Text style={styles.aliasText}>{item.alias}</Text>}
         <Text style={styles.contactName}>
@@ -212,6 +221,14 @@ const AddContactScreen = ({ navigation, route }) => {
             <View style={styles.resultContainer}>
               <Text style={styles.resultTitle}>{t("chat.contactFound")}</Text>
               <View style={styles.contactCard}>
+                <Image
+                  source={{
+                    uri: searchResult.profileImage
+                      ? searchResult.profileImage
+                      : "https://via.placeholder.com/50",
+                  }}
+                  style={styles.contactImage}
+                />
                 <View style={styles.contactInfo}>
                   <Text style={styles.contactName}>
                     {searchResult.firstName} {searchResult.lastName}
@@ -253,13 +270,23 @@ const AddContactScreen = ({ navigation, route }) => {
               <Text style={styles.modalTitle}>{t("chat.editAlias")}</Text>
 
               <View style={styles.modalContactInfo}>
-                <Text style={styles.modalContactName}>
-                  {selectedContact?.contactId.firstName}{" "}
-                  {selectedContact?.contactId.lastName}
-                </Text>
-                <Text style={styles.modalContactPhone}>
-                  {selectedContact?.contactId.phone}
-                </Text>
+                <Image
+                  source={{
+                    uri: selectedContact?.contactId.profileImage
+                      ? selectedContact.contactId.profileImage
+                      : "https://via.placeholder.com/50",
+                  }}
+                  style={styles.modalContactImage}
+                />
+                <View>
+                  <Text style={styles.modalContactName}>
+                    {selectedContact?.contactId.firstName}{" "}
+                    {selectedContact?.contactId.lastName}
+                  </Text>
+                  <Text style={styles.modalContactPhone}>
+                    {selectedContact?.contactId.phone}
+                  </Text>
+                </View>
               </View>
 
               <TextInput
@@ -459,10 +486,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   modalContactInfo: {
-    backgroundColor: "#F0F2F5",
-    padding: 15,
-    borderRadius: 10,
     marginBottom: 20,
+    flexDirection: "row",
+    alignItems: "center",
   },
   modalContactName: {
     fontSize: 16,
@@ -511,6 +537,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginRight: 8,
+  },
+  contactImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  modalContactImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
   },
 });
 
